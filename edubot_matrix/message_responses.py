@@ -52,7 +52,7 @@ class Message:
         if self.room.member_count <= 2:
             return True
 
-        if self.config.bot_name in self.message_content.lower() or random() < 0.05:
+        if self.config.user_id in self.message_content.lower() or random() < 0.05:
             return True
 
         return False
