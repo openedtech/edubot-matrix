@@ -124,7 +124,6 @@ class Config:
 
         self.command_prefix = self._get_cfg(["command_prefix"], default="!c") + " "
 
-        self.bot_name = self._get_cfg(["bot_name"], required=True)
         self.original_prompt = self._get_cfg(["original_prompt"], required=True)
         self.admins = self._get_cfg(["admins"], required=True)
 
