@@ -4,7 +4,8 @@ from random import random
 from nio import AsyncClient, MatrixRoom, RoomMessageText, RoomMessagesError
 
 from edubot_matrix import g
-from edubot_matrix.chat_functions import send_text_to_room, convert_room_messages_to_dict, matrix_to_datetime
+from edubot_matrix.chat_functions import send_text_to_room, convert_room_messages_to_dict, ms_to_datetime, \
+    id_to_username
 from edubot_matrix.config import Config
 from edubot_matrix.storage import Storage
 
@@ -59,7 +60,7 @@ class Message:
 
     async def _respond(self):
         limit = 20
-        if "moodlebot" != self.message_content.lower() or self.room.member_count <= 2:
+        if id_to_username(g.config.user_id) not in self.message_content.lower() or self.room.member_count <= 2:
             limit = 60
 
         messages = await self.client.room_messages(self.room.room_id, self.client.loaded_sync_token, limit=limit)
@@ -70,12 +71,12 @@ class Message:
 
         context = convert_room_messages_to_dict(messages)
         message_dict = {
-            "username": self.event.sender,
+            "username": id_to_username(self.event.sender),
             "message": self.message_content,
-            "time": matrix_to_datetime(self.event.server_timestamp),
+            "time": ms_to_datetime(self.event.server_timestamp),
         }
         context.append(message_dict)
 
-        response = g.edubot.gpt_answer(convert_room_messages_to_dict(messages), messages.room_id)
+        response = g.edubot.gpt_answer(context, messages.room_id)
 
         await send_text_to_room(self.client, self.room.room_id, response, markdown_convert=False)

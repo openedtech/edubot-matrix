@@ -18,6 +18,7 @@ from edubot.bot import EduBot
 
 from edubot_matrix import g
 from edubot_matrix.callbacks import Callbacks
+from edubot_matrix.chat_functions import id_to_username
 from edubot_matrix.config import Config
 from edubot_matrix.storage import Storage
 
@@ -37,7 +38,8 @@ async def main():
     # Read the parsed config file and create a Config object
     config = Config(config_path)
     g.config = config
-    g.edubot = EduBot(config.user_id, "matrix", config.original_prompt)
+    g.config.bot_name = id_to_username(config.user_id)
+    g.edubot = EduBot(g.config.bot_name, "matrix", config.original_prompt)
 
     # Configure the database
     store = Storage(config.database)

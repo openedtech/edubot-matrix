@@ -92,7 +92,11 @@ def make_pill(user_id: str, displayname: str = None) -> str:
     return f'<a href="https://matrix.to/#/{user_id}">{displayname}</a>'
 
 
-def matrix_to_datetime(timestamp: float) -> datetime:
+def id_to_username(user_id: str) -> str:
+    return user_id.split(":")[0].replace("@", "")
+
+
+def ms_to_datetime(timestamp: float) -> datetime:
     return datetime.fromtimestamp(timestamp / 1000)
 
 
@@ -108,9 +112,9 @@ def convert_room_messages_to_dict(messages: RoomMessagesResponse) -> list[dict[s
     for event in reversed(messages_lst):
         result_lst.append(
             {
-                "username": event.sender,
+                "username": id_to_username(event.sender),
                 "message": event.body,
-                "time": matrix_to_datetime(event.server_timestamp),
+                "time": ms_to_datetime(event.server_timestamp),
             }
         )
 
