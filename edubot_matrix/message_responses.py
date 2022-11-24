@@ -4,7 +4,7 @@ from random import random
 from nio import AsyncClient, MatrixRoom, RoomMessageText, RoomMessagesError
 
 from edubot_matrix import g
-from edubot_matrix.chat_functions import send_text_to_room, convert_room_messages_to_dict
+from edubot_matrix.chat_functions import send_text_to_room, convert_room_messages_to_dict, matrix_to_datetime
 from edubot_matrix.config import Config
 from edubot_matrix.storage import Storage
 
@@ -67,6 +67,14 @@ class Message:
         if isinstance(messages, RoomMessagesError):
             logger.error(f"Could not read room of id: {self.room.room_id}")
             return
+
+        context = convert_room_messages_to_dict(messages)
+        message_dict = {
+            "username": self.event.sender,
+            "message": self.message_content,
+            "time": matrix_to_datetime(self.event.server_timestamp),
+        }
+        context.append(message_dict)
 
         response = g.edubot.gpt_answer(convert_room_messages_to_dict(messages), messages.room_id)
 

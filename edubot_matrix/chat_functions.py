@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, tzinfo
 import logging
 from typing import Optional, Union
 
@@ -92,6 +92,10 @@ def make_pill(user_id: str, displayname: str = None) -> str:
     return f'<a href="https://matrix.to/#/{user_id}">{displayname}</a>'
 
 
+def matrix_to_datetime(timestamp: float) -> datetime:
+    return datetime.fromtimestamp(timestamp / 1000)
+
+
 def convert_room_messages_to_dict(messages: RoomMessagesResponse) -> list[dict[str, Union[str, datetime]]]:
     """
     Convert list of events into the format required by EduBot lib.
@@ -104,10 +108,10 @@ def convert_room_messages_to_dict(messages: RoomMessagesResponse) -> list[dict[s
     for event in reversed(messages_lst):
         result_lst.append(
             {
-             "username": event.sender,
-             "message": event.body,
-             "time": datetime.fromtimestamp(event.server_timestamp / 1000)
-             }
+                "username": event.sender,
+                "message": event.body,
+                "time": matrix_to_datetime(event.server_timestamp),
+            }
         )
 
     return result_lst
