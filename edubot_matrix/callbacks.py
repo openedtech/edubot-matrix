@@ -9,12 +9,12 @@ from nio import (
     RoomMessageText,
 )
 
-from matrix import g
-from matrix.bot_commands import Command
-from matrix.chat_functions import send_text_to_room
-from matrix.config import Config
-from matrix.message_responses import Message
-from matrix.storage import Storage
+from edubot_matrix import g
+from edubot_matrix.bot_commands import Command
+from edubot_matrix.chat_functions import send_text_to_room
+from edubot_matrix.config import Config
+from edubot_matrix.message_responses import Message
+from edubot_matrix.storage import Storage
 
 logger = logging.getLogger(__name__)
 

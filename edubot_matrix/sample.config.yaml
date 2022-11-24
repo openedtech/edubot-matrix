@@ -1,9 +1,10 @@
 # Welcome to the sample config file
 # Below you will find various config sections and options
 # Default values are shown
-
-# The string to prefix messages with to talk to the edubot in group chats
+# The string to prefix messages with to talk to the bot in group chats
 command_prefix: "!c"
+
+bot_name: ""
 
 # Options for connecting to the edubot's Matrix account
 matrix:
@@ -24,11 +25,11 @@ matrix:
 storage:
   # The database connection string
   # For SQLite3, this would look like:
-  #     database: "sqlite://edubot.db"
+  #     database: "sqlite://matrix.db"
   # For Postgres, this would look like:
   #     database: "postgres://username:password@localhost/dbname?sslmode=disable"
   database: "sqlite://edubot.db"
-  # The path to a directory for internal edubot storage
+  # The path to a directory for internal matrix storage
   # containing encryption keys, sync tokens, etc.
   store_path: "./store"
 
@@ -42,7 +43,7 @@ logging:
     # Whether logging to a file is enabled
     enabled: false
     # The path to the file to log to. May be relative or absolute
-    filepath: matrix.log
+    filepath: edubot_matrix.log
   # Configure logging to the console output
   console_logging:
     # Whether logging to the console is enabled

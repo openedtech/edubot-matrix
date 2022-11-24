@@ -14,27 +14,30 @@ from nio import (
     RoomMessageText,
 )
 
-from matrix import g
-from matrix.callbacks import Callbacks
-from matrix.config import Config
-from matrix.storage import Storage
+from edubot.bot import EduBot
+
+from edubot_matrix import g
+from edubot_matrix.callbacks import Callbacks
+from edubot_matrix.config import Config
+from edubot_matrix.storage import Storage
 
 logger = logging.getLogger(__name__)
 
 
 async def main():
-    """The first function that is run when starting the edubot"""
+    """The first function that is run when starting the bot"""
 
     # Read user-configured options from a config file.
     # A different config file path can be specified as the first command line argument
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
     else:
-        config_path = "config.yaml"
+        config_path = "edubot_matrix/config.yaml"
 
     # Read the parsed config file and create a Config object
     config = Config(config_path)
     g.config = config
+    g.edubot = EduBot(config.user_id, "matrix", config.original_prompt)
 
     # Configure the database
     store = Storage(config.database)

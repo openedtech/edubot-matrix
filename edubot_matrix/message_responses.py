@@ -3,10 +3,10 @@ from random import random
 
 from nio import AsyncClient, MatrixRoom, RoomMessageText, RoomMessagesError
 
-from edubot import gpt
-from matrix .chat_functions import send_text_to_room, convert_room_messages_to_text
-from matrix.config import Config
-from matrix.storage import Storage
+from edubot_matrix import g
+from edubot_matrix.chat_functions import send_text_to_room, convert_room_messages_to_dict
+from edubot_matrix.config import Config
+from edubot_matrix.storage import Storage
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class Message:
         """Initialize a new Message
 
         Args:
-            client: nio client used to interact with matrix.
+            client: nio client used to interact with edubot_matrix.
 
             store: Bot storage.
 
@@ -52,7 +52,7 @@ class Message:
         if self.room.member_count <= 2:
             return True
 
-        if "moodlebot" in self.message_content.lower() or random() < 0.05:
+        if self.config.bot_name in self.message_content.lower() or random() < 0.05:
             return True
 
         return False
@@ -68,8 +68,6 @@ class Message:
             logger.error(f"Could not read room of id: {self.room.room_id}")
             return
 
-        username = self.event.sender[1:].split(":")[0]
-        response = gpt.gpt_answer(convert_room_messages_to_text(messages),
-                                  username + ": " + self.message_content.lower())
+        response = g.edubot.gpt_answer(convert_room_messages_to_dict(messages), messages.room_id)
 
         await send_text_to_room(self.client, self.room.room_id, response, markdown_convert=False)

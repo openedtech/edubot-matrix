@@ -6,7 +6,7 @@ from typing import Any, List, Optional
 
 import yaml
 
-from matrix.errors import ConfigError
+from edubot_matrix.errors import ConfigError
 
 logger = logging.getLogger()
 logging.getLogger("peewee").setLevel(
@@ -37,7 +37,6 @@ class Config:
                 key, value = line.strip().split("=", 1)
                 env_vars[key] = value
 
-        self.openai_key = env_vars["OPENAI_KEY"]
         self.user_password = env_vars["MATRIX_PW"]
 
         if not self.user_token and not self.user_password:
@@ -108,7 +107,8 @@ class Config:
         else:
             raise ConfigError("Invalid connection string for storage.database")
 
-        # Matrix edubot account setup
+
+        # Matrix account setup
         self.user_id = self._get_cfg(["matrix", "user_id"], required=True)
         if not re.match("@.*:.*", self.user_id):
             raise ConfigError("matrix.user_id must be in the form @name:domain")
@@ -124,6 +124,7 @@ class Config:
 
         self.command_prefix = self._get_cfg(["command_prefix"], default="!c") + " "
 
+        self.bot_name = self._get_cfg(["bot_name"], required=True)
         self.original_prompt = self._get_cfg(["original_prompt"], required=True)
         self.admins = self._get_cfg(["admins"], required=True)
 

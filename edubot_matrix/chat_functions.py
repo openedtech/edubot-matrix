@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 from typing import Optional, Union
 
@@ -17,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 async def send_text_to_room(
-      client: AsyncClient,
-      room_id: str,
-      message: str,
-      notice: bool = False,
-      markdown_convert: bool = True,
-      reply_to_event_id: Optional[str] = None,
+        client: AsyncClient,
+        room_id: str,
+        message: str,
+        notice: bool = False,
+        markdown_convert: bool = True,
+        reply_to_event_id: Optional[str] = None,
 ) -> Union[RoomSendResponse, ErrorResponse]:
     """Send text to a matrix room.
 
@@ -47,7 +48,7 @@ async def send_text_to_room(
     """
     # Determine whether to ping room members or not
     msgtype = "m.notice" if notice else "m.text"
-    
+
     content = {
         "msgtype": msgtype,
         "body": message,
@@ -91,21 +92,25 @@ def make_pill(user_id: str, displayname: str = None) -> str:
     return f'<a href="https://matrix.to/#/{user_id}">{displayname}</a>'
 
 
-def convert_room_messages_to_text(messages: RoomMessagesResponse) -> str:
+def convert_room_messages_to_dict(messages: RoomMessagesResponse) -> list[dict[str, Union[str, datetime]]]:
     """
-    Convert list of events into a string of format:
-    username: message
-    username: message
+    Convert list of events into the format required by EduBot lib.
     """
-    conversation = ""
+    # Remove bad events from the list
     messages_lst = [i for i in messages.chunk if isinstance(i, RoomMessageText)]
 
-    for event in reversed(messages_lst):
-        # Get username from full ID
-        username = event.sender[1:].split(":")[0]
-        conversation += "\n" + username + ": " + event.body
+    result_lst = []
 
-    return conversation + "\n"
+    for event in reversed(messages_lst):
+        result_lst.append(
+            {
+             "username": event.sender,
+             "message": event.body,
+             "time": datetime.fromtimestamp(event.server_timestamp / 1000)
+             }
+        )
+
+    return result_lst
 
 
 async def decryption_failure(self, room: MatrixRoom, event: MegolmEvent) -> None:

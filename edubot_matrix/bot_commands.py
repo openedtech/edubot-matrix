@@ -1,9 +1,9 @@
 from nio import AsyncClient, MatrixRoom, RoomMessageText, MessageDirection
 
-from matrix import g
-from matrix.chat_functions import send_text_to_room
-from matrix.config import Config
-from matrix.storage import Storage
+from edubot_matrix import g
+from edubot_matrix.chat_functions import send_text_to_room
+from edubot_matrix.config import Config
+from edubot_matrix.storage import Storage
 
 
 class Command:

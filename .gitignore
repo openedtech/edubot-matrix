@@ -1,3 +1,8 @@
+*.db
+store/
+.idea/
+edubot_matrix/GREETING
+edubot_matrix/store/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
