@@ -28,19 +28,9 @@ class Config:
 
         # Parse and validate config options
         self._parse_config_values()
-        self._get_from_env()
 
-    def _get_from_env(self):
-        env_vars = {}
-        with open(".env") as f:
-            for line in f:
-                key, value = line.strip().split("=", 1)
-                env_vars[key] = value
-
-        self.user_password = env_vars["MATRIX_PW"]
-
-        if not self.user_token and not self.user_password:
-            raise ConfigError("Must supply either user token or password")
+    def _parse_config_values(self):
+        """Read and validate each config option"""
 
         self.greeting = "Hi, my name is MoodleBot!"
         try:
@@ -49,8 +39,6 @@ class Config:
         except FileNotFoundError:
             pass
 
-    def _parse_config_values(self):
-        """Read and validate each config option"""
         # Logging setup
         formatter = logging.Formatter(
             "%(asctime)s | %(name)s [%(levelname)s] %(message)s"
@@ -100,13 +88,12 @@ class Config:
         if database_path.startswith(sqlite_scheme):
             self.database = {
                 "type": "sqlite",
-                "connection_string": database_path[len(sqlite_scheme) :],
+                "connection_string": database_path[len(sqlite_scheme):],
             }
         elif database_path.startswith(postgres_scheme):
             self.database = {"type": "postgres", "connection_string": database_path}
         else:
             raise ConfigError("Invalid connection string for storage.database")
-
 
         # Matrix account setup
         self.user_id = self._get_cfg(["matrix", "user_id"], required=True)
@@ -128,10 +115,10 @@ class Config:
         self.admins = self._get_cfg(["admins"], required=True)
 
     def _get_cfg(
-        self,
-        path: List[str],
-        default: Optional[Any] = None,
-        required: Optional[bool] = True,
+            self,
+            path: List[str],
+            default: Optional[Any] = None,
+            required: Optional[bool] = True,
     ) -> Any:
         """Get a config option from a path and option name, specifying whether it is
         required.

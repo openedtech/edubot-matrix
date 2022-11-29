@@ -1,3 +1,4 @@
+edubot_matrix/config.yaml
 *.db
 store/
 .idea/
