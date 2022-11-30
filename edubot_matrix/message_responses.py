@@ -60,7 +60,6 @@ class Message:
 
     async def _respond(self):
         limit = 20
-        breakpoint()
         if id_to_username(g.config.user_id) not in self.message_content.lower() or self.room.member_count <= 2:
             limit = 60
 
