@@ -77,12 +77,12 @@ class Message:
             limit=limit,
         )
 
-        # HACK: message_filter param in above method doesn't work in DMS when filtering out m.room.message
-        # So we have to get all of the events and extract message events with Python.
-
         if isinstance(messages, RoomMessagesError):
             logger.error(f"Could not read room of id: {self.room.room_id}")
             return
+
+        # HACK: message_filter kwarg in room_messages method doesn't work in DMS when filtering out m.room.message
+        # So we have to get all the events and extract message events with Python.
 
         messages.chunk = [i for i in messages.chunk if isinstance(i, RoomMessageText)]
 
