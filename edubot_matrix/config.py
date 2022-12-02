@@ -88,7 +88,7 @@ class Config:
         if database_path.startswith(sqlite_scheme):
             self.database = {
                 "type": "sqlite",
-                "connection_string": database_path[len(sqlite_scheme):],
+                "connection_string": database_path[len(sqlite_scheme) :],
             }
         elif database_path.startswith(postgres_scheme):
             self.database = {"type": "postgres", "connection_string": database_path}
@@ -115,10 +115,10 @@ class Config:
         self.admins = self._get_cfg(["admins"], required=True)
 
     def _get_cfg(
-            self,
-            path: List[str],
-            default: Optional[Any] = None,
-            required: Optional[bool] = True,
+        self,
+        path: List[str],
+        default: Optional[Any] = None,
+        required: Optional[bool] = True,
     ) -> Any:
         """Get a config option from a path and option name, specifying whether it is
         required.

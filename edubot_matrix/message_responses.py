@@ -1,11 +1,15 @@
 import logging
 from random import random
 
-from nio import AsyncClient, MatrixRoom, RoomMessageText, RoomMessagesError
+from nio import AsyncClient, MatrixRoom, RoomMessagesError, RoomMessageText
 
 from edubot_matrix import g
-from edubot_matrix.chat_functions import send_text_to_room, convert_room_messages_to_dict, ms_to_datetime, \
-    id_to_username
+from edubot_matrix.chat_functions import (
+    convert_room_messages_to_dict,
+    id_to_username,
+    ms_to_datetime,
+    send_text_to_room,
+)
 from edubot_matrix.config import Config
 from edubot_matrix.storage import Storage
 
@@ -14,13 +18,13 @@ logger = logging.getLogger(__name__)
 
 class Message:
     def __init__(
-          self,
-          client: AsyncClient,
-          store: Storage,
-          config: Config,
-          message_content: str,
-          room: MatrixRoom,
-          event: RoomMessageText,
+        self,
+        client: AsyncClient,
+        store: Storage,
+        config: Config,
+        message_content: str,
+        room: MatrixRoom,
+        event: RoomMessageText,
     ):
         """Initialize a new Message
 
@@ -50,24 +54,37 @@ class Message:
             await self._respond()
 
     def _check_if_response(self):
-        if self.room.member_count <= 2:
-            return True
-
-        if self.config.user_id in self.message_content.lower() or random() < 0.05:
+        if (
+            id_to_username(self.config.user_id) in self.message_content.lower()
+            or random() < 0.05
+            or self.room.member_count <= 2
+        ):
             return True
 
         return False
 
     async def _respond(self):
         limit = 20
-        if id_to_username(g.config.user_id) not in self.message_content.lower() or self.room.member_count <= 2:
-            limit = 60
+        if (
+            id_to_username(g.config.user_id) not in self.message_content.lower()
+            or self.room.member_count <= 2
+        ):
+            limit = 40
 
-        messages = await self.client.room_messages(self.room.room_id, self.client.loaded_sync_token, limit=limit)
+        messages = await self.client.room_messages(
+            self.room.room_id,
+            self.client.next_batch,
+            limit=limit,
+        )
 
-        # TODO: Why does this fire on encrypted rooms sometimes even though the room can be read?
-        #if isinstance(messages, RoomMessagesError):
-            #logger.error(f"Could not read room of id: {self.room.room_id}")
+        # HACK: message_filter param in above method doesn't work in DMS when filtering out m.room.message
+        # So we have to get all of the events and extract message events with Python.
+
+        if isinstance(messages, RoomMessagesError):
+            logger.error(f"Could not read room of id: {self.room.room_id}")
+            return
+
+        messages.chunk = [i for i in messages.chunk if isinstance(i, RoomMessageText)]
 
         context = convert_room_messages_to_dict(messages)
         message_dict = {
@@ -79,4 +96,6 @@ class Message:
 
         response = g.edubot.gpt_answer(context, messages.room_id)
 
-        await send_text_to_room(self.client, self.room.room_id, response, markdown_convert=False)
+        await send_text_to_room(
+            self.client, self.room.room_id, response, markdown_convert=False
+        )

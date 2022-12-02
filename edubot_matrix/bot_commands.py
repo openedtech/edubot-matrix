@@ -1,4 +1,4 @@
-from nio import AsyncClient, MatrixRoom, RoomMessageText, MessageDirection
+from nio import AsyncClient, MatrixRoom, MessageDirection, RoomMessageText
 
 from edubot_matrix import g
 from edubot_matrix.chat_functions import send_text_to_room
@@ -8,13 +8,13 @@ from edubot_matrix.storage import Storage
 
 class Command:
     def __init__(
-          self,
-          client: AsyncClient,
-          store: Storage,
-          config: Config,
-          command_and_args: str,
-          room: MatrixRoom,
-          event: RoomMessageText,
+        self,
+        client: AsyncClient,
+        store: Storage,
+        config: Config,
+        command_and_args: str,
+        room: MatrixRoom,
+        event: RoomMessageText,
     ):
         """A command made by a user.
 
@@ -60,10 +60,12 @@ class Command:
         await send_text_to_room(
             self.client,
             self.room.room_id,
-            (f"#Admin commands:\n"
-             f"`{g.config.command_prefix}greeting [msg]` change MoodleBot's greeting, if no msg is supplied the "
-             f"current greeting is shown "
-             ))
+            (
+                f"#Admin commands:\n"
+                f"`{g.config.command_prefix}greeting [msg]` change MoodleBot's greeting, if no msg is supplied the "
+                f"current greeting is shown "
+            ),
+        )
 
     async def _unknown_command(self):
         await send_text_to_room(

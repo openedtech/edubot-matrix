@@ -1,8 +1,9 @@
-# Welcome to the sample config file
-# Below you will find various config sections and options
-# Default values are shown
-# The string to prefix messages with to talk to the bot in group chats
 command_prefix: "!c"
+
+# Personality of the bot
+original_prompt: ""
+
+admins: ["user@homeserver.org"]
 
 # Options for connecting to the edubot's Matrix account
 matrix:

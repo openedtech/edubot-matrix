@@ -1,5 +1,5 @@
-from datetime import datetime, tzinfo
 import logging
+from datetime import datetime
 from typing import Optional, Union
 
 from markdown import markdown
@@ -8,22 +8,22 @@ from nio import (
     ErrorResponse,
     MatrixRoom,
     MegolmEvent,
-    RoomSendResponse,
-    SendRetryError,
     RoomMessagesResponse,
     RoomMessageText,
+    RoomSendResponse,
+    SendRetryError,
 )
 
 logger = logging.getLogger(__name__)
 
 
 async def send_text_to_room(
-        client: AsyncClient,
-        room_id: str,
-        message: str,
-        notice: bool = False,
-        markdown_convert: bool = True,
-        reply_to_event_id: Optional[str] = None,
+    client: AsyncClient,
+    room_id: str,
+    message: str,
+    notice: bool = False,
+    markdown_convert: bool = True,
+    reply_to_event_id: Optional[str] = None,
 ) -> Union[RoomSendResponse, ErrorResponse]:
     """Send text to a matrix room.
 
@@ -100,7 +100,9 @@ def ms_to_datetime(timestamp: float) -> datetime:
     return datetime.fromtimestamp(timestamp / 1000)
 
 
-def convert_room_messages_to_dict(messages: RoomMessagesResponse) -> list[dict[str, Union[str, datetime]]]:
+def convert_room_messages_to_dict(
+    messages: RoomMessagesResponse,
+) -> list[dict[str, Union[str, datetime]]]:
     """
     Convert list of events into the format required by EduBot lib.
     """
@@ -117,6 +119,8 @@ def convert_room_messages_to_dict(messages: RoomMessagesResponse) -> list[dict[s
                 "time": ms_to_datetime(event.server_timestamp),
             }
         )
+
+    result_lst = sorted(result_lst, key=lambda t: t["time"])
 
     return result_lst
 
