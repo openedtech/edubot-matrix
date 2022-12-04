@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from typing import Optional, Union
 
+from edubot.types import MessageInfo
 from markdown import markdown
 from nio import (
     AsyncClient,
@@ -109,7 +110,7 @@ def convert_room_messages_to_dict(
     # Remove bad events from the list
     messages_lst = [i for i in messages.chunk if isinstance(i, RoomMessageText)]
 
-    result_lst = []
+    result_lst: list[MessageInfo] = []
 
     for event in reversed(messages_lst):
         result_lst.append(
@@ -119,8 +120,6 @@ def convert_room_messages_to_dict(
                 "time": ms_to_datetime(event.server_timestamp),
             }
         )
-
-    result_lst = sorted(result_lst, key=lambda t: t["time"])
 
     return result_lst
 

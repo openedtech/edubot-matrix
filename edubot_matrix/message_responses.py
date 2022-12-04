@@ -1,6 +1,7 @@
 import logging
 from random import random
 
+from edubot.types import MessageInfo
 from nio import AsyncClient, MatrixRoom, RoomMessagesError, RoomMessageText
 
 from edubot_matrix import g
@@ -81,18 +82,12 @@ class Message:
             logger.error(f"Could not read room of id: {self.room.room_id}")
             return
 
-        # HACK: message_filter kwarg in room_messages method doesn't work in DMS when filtering out m.room.message
+        # HACK: message_filter kwarg in room_messages method doesn't work in DMS when filtering only m.room.message
         # So we have to get all the events and extract message events with Python.
 
         messages.chunk = [i for i in messages.chunk if isinstance(i, RoomMessageText)]
 
         context = convert_room_messages_to_dict(messages)
-        message_dict = {
-            "username": id_to_username(self.event.sender),
-            "message": self.message_content,
-            "time": ms_to_datetime(self.event.server_timestamp),
-        }
-        context.append(message_dict)
 
         response = g.edubot.gpt_answer(context, messages.room_id)
 
