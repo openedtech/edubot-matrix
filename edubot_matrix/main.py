@@ -38,6 +38,7 @@ async def main():
     config = Config(config_path)
     g.config = config
     g.config.bot_name = id_to_username(config.user_id)
+    g.config.command_prefix = f"!{g.config.bot_name}"
     g.edubot = EduBot(g.config.bot_name, "matrix", config.original_prompt)
 
     # Configure the database

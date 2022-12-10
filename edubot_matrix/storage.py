@@ -1,5 +1,8 @@
 import logging
+import sqlite3
 from typing import Any, Dict
+
+import g
 
 # The latest migration version of the database.
 #
@@ -47,7 +50,7 @@ class Storage:
         logger.info(f"Database initialization of type '{self.db_type}' complete")
 
     def _get_database_connection(
-        self, database_type: str, connection_string: str
+            self, database_type: str, connection_string: str
     ) -> Any:
         """Creates and returns a connection to the database"""
         if database_type == "sqlite":
@@ -72,7 +75,7 @@ class Storage:
         # Set up the migration_version table
         self._execute(
             """
-            CREATE TABLE migration_version (
+            CREATE TABLE IF NOT EXISTS migration_version (
                 version INTEGER PRIMARY KEY
             )
         """
@@ -81,7 +84,7 @@ class Storage:
         # Initially set the migration version to 0
         self._execute(
             """
-            INSERT INTO migration_version (
+            INSERT OR IGNORE INTO migration_version (
                 version
             ) VALUES (?)
         """,
@@ -89,6 +92,29 @@ class Storage:
         )
 
         # Set up any other necessary database tables here
+
+        self._execute(
+            """
+            CREATE TABLE IF NOT EXISTS admin (
+                admin_id STRING PRIMARY KEY
+            );
+            
+            CREATE TABLE IF NOT EXISTS room  (
+                room_id STRING PRIMARY KEY,
+                personality STRING
+            );
+            
+            -- Joiner table to allow many-many relationship between room & admin
+            CREATE TABLE IF NOT EXISTS room_admin (
+                admin_id FOREIGN KEY REFERENCES admin.user_id PRIMARY KEY,
+                room_id FOREIGN KEY references room.room_id PRIMARY KEY
+            );
+            """
+        )
+
+        self.conn.commit()
+
+        self.conn.commit()
 
         logger.info("Database setup complete")
 
@@ -124,3 +150,119 @@ class Storage:
             self.cursor.execute(args[0].replace("?", "%s"), *args[1:])
         else:
             self.cursor.execute(*args)
+
+    def _add_room_to_db(self, room_id: str) -> None:
+        """
+        Adds a room to the database if it doesn't already exist
+
+        Args:
+            room_id: A Matrix room ID
+        """
+
+        self._execute(
+            """
+            INSERT OR IGNORE INTO room(room_id)
+            VALUES (?);
+            """, (room_id,)
+        )
+        self.conn.commit()
+
+    def add_room_admin(self, room_id: str, admin_id: str) -> None:
+        """
+        Adds an admin to a room
+
+        Args:
+            room_id: The room ID that the user is an admin of
+            admin_id: The user ID of the admin
+        """
+
+        # Insert admin and room into DB if they aren't already
+        self._execute(
+            """
+            INSERT OR IGNORE INTO admin(admin_id)
+            VALUES (?);
+            """
+            , (admin_id,)
+        )
+        self._add_room_to_db(room_id)
+
+        # Make an admin of the room, if they are not already.
+        self._execute(
+            """
+            INSERT OR IGNORE INTO room_admin(admin_id, room_id)
+            VALUES (?, ?);
+            """
+            , (admin_id, room_id)
+        )
+
+        self.conn.commit()
+
+    def remove_room_admin(self, room_id, admin_id):
+        """
+        Delete an admin from a room.
+        Args:
+            room_id: A Matrix room ID.
+            admin_id: A Matrix user ID.
+        """
+        try:
+            self._execute(
+                """
+                DELETE FROM room_admin
+                WHERE room_id = (?)
+                AND admin_id = (?);
+                """, (room_id, admin_id)
+            )
+            self.conn.commit()
+        # If admin_id was not an admin of room_id, silently ignore.
+        except sqlite3.OperationalError:
+            pass
+
+    def list_room_admins(self, room_id: str) -> list[str]:
+        """
+        Get a list of admins for a particular room.
+
+        Args:
+            room_id: A Matrix room ID.
+        """
+
+        self._execute(
+            """
+            SELECT (admin_id) FROM room_admin
+            WHERE room_id = (?);
+            """, (room_id,)
+        )
+
+        raw_list: list[tuple[str]] = self.cursor.fetchall()
+
+        # Unpack list of tuples
+        return [i[0] for i in raw_list]
+
+    def check_if_admin(self, room_id: str, user_id: str) -> bool:
+        """
+        Check if someone has admin rights in a particular room.
+
+        Args:
+            room_id: A Matrix room ID.
+            user_id: A Matrix user ID.
+        """
+
+        return (user_id in self.list_room_admins(room_id)  # If the user is an admin in this room
+                or user_id in g.config.admins)  # OR the user is a hard-coded super-admin
+
+    def set_personality(self, room_id: str, personality: str) -> None:
+        """
+        Change the Bot's personality for a room.
+
+        Args:
+            room_id: A Matrix room ID.
+            personality: The personality string to set.
+        """
+        self._add_room_to_db(room_id)
+        self._execute(
+            """
+            UPDATE room
+            SET personality = (?) 
+            WHERE room_id = (?);
+            """, (personality, room_id)
+        )
+        self.conn.commit()

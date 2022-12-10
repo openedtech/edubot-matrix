@@ -26,7 +26,7 @@ class Callbacks:
         self.client = client
         self.store = store
         self.config = config
-        self.command_prefix = config.command_prefix
+        self.command_prefix = g.config.command_prefix
 
     async def message(self, room: MatrixRoom, event: RoomMessageText) -> None:
         """Callback for when a message event is received
@@ -49,7 +49,7 @@ class Callbacks:
         )
 
         # Process as message if in a public room without command prefix
-        has_command_prefix = msg.startswith(self.command_prefix.lstrip())
+        has_command_prefix = msg.startswith(self.command_prefix)
 
         if not has_command_prefix:
             # General message listener
@@ -60,7 +60,7 @@ class Callbacks:
         # Admin commands
         if has_command_prefix:
             # Remove the command prefix
-            msg = msg[len(self.command_prefix) :]
+            msg = msg.replace(self.command_prefix, "", 1).lstrip()
 
         command = Command(self.client, self.store, self.config, msg, room, event)
         await command.process()

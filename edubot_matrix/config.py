@@ -109,7 +109,7 @@ class Config:
         )
         self.homeserver_url = self._get_cfg(["matrix", "homeserver_url"], required=True)
 
-        self.command_prefix = self._get_cfg(["command_prefix"], default="!c") + " "
+        # self.command_prefix = self._get_cfg(["command_prefix"], default="!c") + " "
 
         self.original_prompt = self._get_cfg(["original_prompt"], required=True)
         self.admins = self._get_cfg(["admins"], required=True)
