@@ -1,8 +1,6 @@
 # Welcome to the sample config file
 # Below you will find various config sections and options
 # Default values are shown
-# The string to prefix messages with to talk to the bot in group chats
-command_prefix: "!c"
 
 # Options for connecting to the edubot's Matrix account
 matrix:
@@ -18,7 +16,7 @@ matrix:
   # If this device ID already exists, messages will be dropped silently in encrypted rooms
   device_id: ABCDEFGHIJ
   # What to name the logged in device
-  device_name: moodlebot_init
+  device_name: device_name
 
 storage:
   # The database connection string
