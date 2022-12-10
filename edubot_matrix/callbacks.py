@@ -1,13 +1,7 @@
 import asyncio
 import logging
 
-from nio import (
-    AsyncClient,
-    InviteMemberEvent,
-    JoinError,
-    MatrixRoom,
-    RoomMessageText,
-)
+from nio import AsyncClient, InviteMemberEvent, JoinError, MatrixRoom, RoomMessageText
 
 from edubot_matrix import g
 from edubot_matrix.bot_commands import Command
@@ -66,7 +60,7 @@ class Callbacks:
         # Admin commands
         if has_command_prefix:
             # Remove the command prefix
-            msg = msg[len(self.command_prefix):]
+            msg = msg[len(self.command_prefix) :]
 
         command = Command(self.client, self.store, self.config, msg, room, event)
         await command.process()
@@ -104,7 +98,7 @@ class Callbacks:
         logger.info(f"Joined {room.room_id}")
 
     async def invite_event_filtered_callback(
-          self, room: MatrixRoom, event: InviteMemberEvent
+        self, room: MatrixRoom, event: InviteMemberEvent
     ) -> None:
         """
         Since the InviteMemberEvent is fired for every m.room.member state received
@@ -115,4 +109,3 @@ class Callbacks:
         if event.state_key == self.client.user_id:
             # This is our own membership (invite) event
             await self.invite(room, event)
-

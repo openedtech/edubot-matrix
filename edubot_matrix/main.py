@@ -5,6 +5,7 @@ import sys
 from time import sleep
 
 from aiohttp import ClientConnectionError, ServerDisconnectedError
+from edubot.bot import EduBot
 from nio import (
     AsyncClient,
     AsyncClientConfig,
@@ -13,8 +14,6 @@ from nio import (
     LoginError,
     RoomMessageText,
 )
-
-from edubot.bot import EduBot
 
 from edubot_matrix import g
 from edubot_matrix.callbacks import Callbacks
