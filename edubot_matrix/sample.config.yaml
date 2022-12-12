@@ -1,11 +1,11 @@
 # Welcome to the sample config file
 # Below you will find various config sections and options
-# Default values are shown
+# Default values are shown where applicable
 
 # Personality of the bot
 original_prompt: ""
 
-# Super admins will be able to execute admin commands in DMs and any room.
+# Super admins are able to use commands in any room and can change bot-wide settings
 admins: ["user@homeserver.org"]
 
 # Options for connecting to the edubot's Matrix account

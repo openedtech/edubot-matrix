@@ -1,3 +1,18 @@
+# This file is part of edubot-matrix - https://github.com/openedtech/edubot-matrix
+#
+# edubot-matrix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# edubot-matrix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with edubot-matrix .  If not, see <http://www.gnu.org/licenses/>.
+
 import asyncio
 import logging
 
@@ -66,7 +81,8 @@ class Callbacks:
         await command.process()
 
     async def _join_message(self, room_id):
-        await asyncio.sleep(5)
+        """Send greeting to room when we join."""
+        await asyncio.sleep(3)
         await send_text_to_room(self.client, room_id, g.config.greeting)
 
     async def invite(self, room: MatrixRoom, event: InviteMemberEvent) -> None:
@@ -94,6 +110,14 @@ class Callbacks:
             logger.error("Unable to join room: %s", room.room_id)
 
         asyncio.ensure_future(self._join_message(room.room_id))
+
+        # The user who invited the bot and the room owner should be made admins.
+        self.store.add_room_admin(room.room_id, event.sender)
+
+        # room.creator is sometimes an empty string
+        if room.creator and room.creator != event.sender:
+            self.store.add_room_admin(room.room_id, room.creator)
+
         # Successfully joined room
         logger.info(f"Joined {room.room_id}")
 
