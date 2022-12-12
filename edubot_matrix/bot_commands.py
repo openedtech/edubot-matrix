@@ -33,13 +33,13 @@ logger = logging.getLogger(__name__)
 
 class Command:
     def __init__(
-            self,
-            client: AsyncClient,
-            store: Storage,
-            config: Config,
-            command_and_args: str,
-            room: MatrixRoom,
-            event: RoomMessageText,
+        self,
+        client: AsyncClient,
+        store: Storage,
+        config: Config,
+        command_and_args: str,
+        room: MatrixRoom,
+        event: RoomMessageText,
     ):
         """A command made by a user.
 
@@ -208,7 +208,9 @@ class Command:
         # Disallow removing yourself from admin list
         if admin_id == self.event.sender:
             await send_text_to_room(
-                self.client, self.room.room_id, "You cannot revoke your own admin permissions!"
+                self.client,
+                self.room.room_id,
+                "You cannot revoke your own admin permissions!",
             )
             return
 

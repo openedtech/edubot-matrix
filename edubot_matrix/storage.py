@@ -273,12 +273,12 @@ class Storage:
             room_id: A Matrix room ID.
             user_id: A Matrix user ID.
         """
+        # If the user is an admin in this room OR the user is a hard-coded super-admin
+        is_admin = (
+            user_id in self.list_room_admins(room_id) or user_id in g.config.admins
+        )
 
-        return (
-            user_id
-            in self.list_room_admins(room_id)  # If the user is an admin in this room
-            or user_id in g.config.admins
-        )  # OR the user is a hard-coded super-admin
+        return is_admin
 
     def set_personality(self, room_id: str, personality: str) -> None:
         """
