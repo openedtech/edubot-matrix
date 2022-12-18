@@ -1,5 +1,23 @@
+# This file is part of edubot-matrix - https://github.com/openedtech/edubot-matrix
+#
+# edubot-matrix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# edubot-matrix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with edubot-matrix.  If not, see <http://www.gnu.org/licenses/>.
+
 import logging
+import sqlite3
 from typing import Any, Dict
+
+from edubot_matrix import g
 
 # The latest migration version of the database.
 #
@@ -72,7 +90,7 @@ class Storage:
         # Set up the migration_version table
         self._execute(
             """
-            CREATE TABLE migration_version (
+            CREATE TABLE IF NOT EXISTS migration_version (
                 version INTEGER PRIMARY KEY
             )
         """
@@ -81,14 +99,44 @@ class Storage:
         # Initially set the migration version to 0
         self._execute(
             """
-            INSERT INTO migration_version (
+            INSERT OR IGNORE INTO migration_version (
                 version
             ) VALUES (?)
         """,
             (0,),
         )
 
-        # Set up any other necessary database tables here
+        self._execute(
+            """
+            CREATE TABLE IF NOT EXISTS admin (
+                admin_id STRING PRIMARY KEY
+            );
+            """
+        )
+
+        self._execute(
+            """
+            CREATE TABLE IF NOT EXISTS room  (
+                room_id STRING PRIMARY KEY,
+                personality STRING
+            );
+            """
+        )
+
+        self._execute(
+            """
+            -- Joiner table to allow many-many relationship between room & admin
+            CREATE TABLE IF NOT EXISTS room_admin (
+                admin_id STRING,
+                room_id STRING,
+                PRIMARY KEY (admin_id, room_id),
+                FOREIGN KEY (admin_id) REFERENCES admin(user_id),
+                FOREIGN KEY (room_id) references room(room_id)
+            );
+            """
+        )
+
+        self.conn.commit()
 
         logger.info("Database setup complete")
 
@@ -124,3 +172,130 @@ class Storage:
             self.cursor.execute(args[0].replace("?", "%s"), *args[1:])
         else:
             self.cursor.execute(*args)
+
+    def _add_room_to_db(self, room_id: str) -> None:
+        """
+        Adds a room to the database if it doesn't already exist
+
+        Args:
+            room_id: A Matrix room ID
+        """
+
+        self._execute(
+            """
+            INSERT OR IGNORE INTO room(room_id)
+            VALUES (?);
+            """,
+            (room_id,),
+        )
+        self.conn.commit()
+        logger.info(f"Added room '{room_id}' to DB")
+
+    def add_room_admin(self, room_id: str, admin_id: str) -> None:
+        """
+        Adds an admin to a room
+
+        Args:
+            room_id: The room ID that the user is an admin of
+            admin_id: The user ID of the admin
+        """
+
+        # Insert admin and room into DB if they aren't already
+        self._execute(
+            """
+            INSERT OR IGNORE INTO admin(admin_id)
+            VALUES (?);
+            """,
+            (admin_id,),
+        )
+        self._add_room_to_db(room_id)
+
+        # Make an admin of the room, if they are not already.
+        self._execute(
+            """
+            INSERT OR IGNORE INTO room_admin(admin_id, room_id)
+            VALUES (?, ?);
+            """,
+            (admin_id, room_id),
+        )
+
+        self.conn.commit()
+        logger.info(f"New admin '{admin_id}' in '{room_id}'")
+
+    def remove_room_admin(self, room_id, admin_id):
+        """
+        Delete an admin from a room.
+        Args:
+            room_id: A Matrix room ID.
+            admin_id: A Matrix user ID.
+        """
+        try:
+            self._execute(
+                """
+                DELETE FROM room_admin
+                WHERE room_id = (?)
+                AND admin_id = (?);
+                """,
+                (room_id, admin_id),
+            )
+            self.conn.commit()
+            logger.info(f"Removed admin '{admin_id}' in '{room_id}'")
+        # If admin_id was not an admin of room_id, silently ignore.
+        except sqlite3.OperationalError:
+            pass
+
+    def list_room_admins(self, room_id: str) -> list[str]:
+        """
+        Get a list of admins for a particular room.
+
+        Args:
+            room_id: A Matrix room ID.
+        """
+
+        self._execute(
+            """
+            SELECT (admin_id) FROM room_admin
+            WHERE room_id = (?);
+            """,
+            (room_id,),
+        )
+
+        raw_list: list[tuple[str]] = self.cursor.fetchall()
+
+        # Unpack list of tuples
+        return [i[0] for i in raw_list]
+
+    def check_if_admin(self, room_id: str, user_id: str) -> bool:
+        """
+        Check if someone has admin rights in a particular room.
+
+        Args:
+            room_id: A Matrix room ID.
+            user_id: A Matrix user ID.
+        """
+        # If the user is an admin in this room OR the user is a hard-coded super-admin
+        is_admin = (
+            user_id in self.list_room_admins(room_id) or user_id in g.config.admins
+        )
+
+        return is_admin
+
+    def set_personality(self, room_id: str, personality: str) -> None:
+        """
+        Change the Bot's personality for a room.
+
+        Args:
+            room_id: A Matrix room ID.
+            personality: The personality string to set.
+        """
+        self._add_room_to_db(room_id)
+        self._execute(
+            """
+            UPDATE room
+            SET personality = (?)
+            WHERE room_id = (?);
+            """,
+            (personality, room_id),
+        )
+        self.conn.commit()
+        logger.info(f"Set personality '{personality}' in '{room_id}'")

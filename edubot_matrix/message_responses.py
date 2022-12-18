@@ -1,18 +1,31 @@
+# This file is part of edubot-matrix - https://github.com/openedtech/edubot-matrix
+#
+# edubot-matrix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# edubot-matrix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with edubot-matrix .  If not, see <http://www.gnu.org/licenses/>.
+
 import logging
 from random import random
 
-from edubot.types import MessageInfo
 from nio import AsyncClient, MatrixRoom, RoomMessagesError, RoomMessageText
 
 from edubot_matrix import g
-from edubot_matrix.chat_functions import (
-    convert_room_messages_to_dict,
-    id_to_username,
-    ms_to_datetime,
-    send_text_to_room,
-)
 from edubot_matrix.config import Config
 from edubot_matrix.storage import Storage
+from edubot_matrix.utils import (
+    convert_room_messages_to_dict,
+    id_to_username,
+    send_text_to_room,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +78,10 @@ class Message:
         return False
 
     async def _respond(self):
+        """Respond to a message using a GPT completion."""
+        # If in a DM or if mentioned, read more events.
+        # Why? The bot can afford to respond a bit slower if it wasn't mentioned.
+        # However, when the bot is mentioned, quicker replies are preferred over more context.
         limit = 20
         if (
             id_to_username(g.config.user_id) not in self.message_content.lower()
@@ -72,25 +89,27 @@ class Message:
         ):
             limit = 40
 
-        messages = await self.client.room_messages(
+        # The method is called 'room_messages' but it actually returns all events in the room.
+        events = await self.client.room_messages(
             self.room.room_id,
             self.client.next_batch,
             limit=limit,
         )
 
-        if isinstance(messages, RoomMessagesError):
+        if isinstance(events, RoomMessagesError):
             logger.error(f"Could not read room of id: {self.room.room_id}")
             return
 
         # HACK: message_filter kwarg in room_messages method doesn't work in DMS when filtering only m.room.message
         # So we have to get all the events and extract message events with Python.
+        events.chunk = [i for i in events.chunk if isinstance(i, RoomMessageText)]
 
-        messages.chunk = [i for i in messages.chunk if isinstance(i, RoomMessageText)]
+        # Convert the message events into the format required by edubot lib
+        context = convert_room_messages_to_dict(events)
 
-        context = convert_room_messages_to_dict(messages)
-
-        response = g.edubot.gpt_answer(context, messages.room_id)
+        # Get the GPT completion
+        completion = g.edubot.gpt_answer(context, events.room_id)
 
         await send_text_to_room(
-            self.client, self.room.room_id, response, markdown_convert=False
+            self.client, self.room.room_id, completion, markdown_convert=False
         )

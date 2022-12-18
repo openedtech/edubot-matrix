@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+# This file is part of edubot-matrix - https://github.com/openedtech/edubot-matrix
+#
+# edubot-matrix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# edubot-matrix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with edubot-matrix .  If not, see <http://www.gnu.org/licenses/>.
+
 import asyncio
 import logging
 import sys
@@ -17,9 +32,9 @@ from nio import (
 
 from edubot_matrix import g
 from edubot_matrix.callbacks import Callbacks
-from edubot_matrix.chat_functions import id_to_username
 from edubot_matrix.config import Config
 from edubot_matrix.storage import Storage
+from edubot_matrix.utils import id_to_username
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +53,7 @@ async def main():
     config = Config(config_path)
     g.config = config
     g.config.bot_name = id_to_username(config.user_id)
+    g.config.command_prefix = f"!{g.config.bot_name}"
     g.edubot = EduBot(g.config.bot_name, "matrix", config.original_prompt)
 
     # Configure the database

@@ -1,3 +1,21 @@
+# This file is part of edubot-matrix - https://github.com/openedtech/edubot-matrix
+#
+# edubot-matrix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# edubot-matrix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with edubot-matrix .  If not, see <http://www.gnu.org/licenses/>.
+"""
+Small helper functions for formatting and common chat tasks
+"""
+
 import logging
 from datetime import datetime
 from typing import Optional, Union
@@ -122,6 +140,18 @@ def convert_room_messages_to_dict(
         )
 
     return result_lst
+
+
+def validate_user_id(user_id: str):
+    """
+    Checks if a user_id is in the valid format
+    Args:
+        user_id:
+
+    Returns:
+
+    """
+    pass
 
 
 async def decryption_failure(self, room: MatrixRoom, event: MegolmEvent) -> None:

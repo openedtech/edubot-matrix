@@ -1,3 +1,18 @@
+# This file is part of edubot-matrix - https://github.com/openedtech/edubot-matrix
+#
+# edubot-matrix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# edubot-matrix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with edubot-matrix .  If not, see <http://www.gnu.org/licenses/>.
+
 import asyncio
 import logging
 
@@ -5,10 +20,10 @@ from nio import AsyncClient, InviteMemberEvent, JoinError, MatrixRoom, RoomMessa
 
 from edubot_matrix import g
 from edubot_matrix.bot_commands import Command
-from edubot_matrix.chat_functions import send_text_to_room
 from edubot_matrix.config import Config
 from edubot_matrix.message_responses import Message
 from edubot_matrix.storage import Storage
+from edubot_matrix.utils import send_text_to_room
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +41,7 @@ class Callbacks:
         self.client = client
         self.store = store
         self.config = config
-        self.command_prefix = config.command_prefix
+        self.command_prefix = g.config.command_prefix
 
     async def message(self, room: MatrixRoom, event: RoomMessageText) -> None:
         """Callback for when a message event is received
@@ -49,7 +64,7 @@ class Callbacks:
         )
 
         # Process as message if in a public room without command prefix
-        has_command_prefix = msg.startswith(self.command_prefix.lstrip())
+        has_command_prefix = msg.startswith(self.command_prefix)
 
         if not has_command_prefix:
             # General message listener
@@ -60,13 +75,15 @@ class Callbacks:
         # Admin commands
         if has_command_prefix:
             # Remove the command prefix
-            msg = msg[len(self.command_prefix) :]
+            msg = msg.replace(self.command_prefix, "", 1).lstrip()
 
         command = Command(self.client, self.store, self.config, msg, room, event)
         await command.process()
 
     async def _join_message(self, room_id):
-        await asyncio.sleep(5)
+        """Send greeting to room when we join."""
+        # Wait to allow time for the bot to join the room
+        await asyncio.sleep(3)
         await send_text_to_room(self.client, room_id, g.config.greeting)
 
     async def invite(self, room: MatrixRoom, event: InviteMemberEvent) -> None:
@@ -93,7 +110,16 @@ class Callbacks:
         else:
             logger.error("Unable to join room: %s", room.room_id)
 
+        # Send bot greeting to the room in the near future
         asyncio.ensure_future(self._join_message(room.room_id))
+
+        # The user who invited the bot and the room creator should be made admins.
+        self.store.add_room_admin(room.room_id, event.sender)
+
+        # room.creator is sometimes an empty string
+        if room.creator and room.creator != event.sender:
+            self.store.add_room_admin(room.room_id, room.creator)
+
         # Successfully joined room
         logger.info(f"Joined {room.room_id}")
 

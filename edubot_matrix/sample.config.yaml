@@ -1,14 +1,11 @@
-<<<<<<< HEAD
 # Welcome to the sample config file
 # Below you will find various config sections and options
-# Default values are shown
-=======
-command_prefix: "!c"
->>>>>>> 1103ede8f21a5094fa3203fb7778d0683ac10143
+# Default values are shown where applicable
 
 # Personality of the bot
 original_prompt: ""
 
+# Super admins are able to use commands in any room and can change bot-wide settings
 admins: ["user@homeserver.org"]
 
 # Options for connecting to the edubot's Matrix account
