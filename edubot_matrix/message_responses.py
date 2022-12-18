@@ -19,13 +19,13 @@ from random import random
 from nio import AsyncClient, MatrixRoom, RoomMessagesError, RoomMessageText
 
 from edubot_matrix import g
-from edubot_matrix.chat_functions import (
+from edubot_matrix.config import Config
+from edubot_matrix.storage import Storage
+from edubot_matrix.utils import (
     convert_room_messages_to_dict,
     id_to_username,
     send_text_to_room,
 )
-from edubot_matrix.config import Config
-from edubot_matrix.storage import Storage
 
 logger = logging.getLogger(__name__)
 

@@ -12,6 +12,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with edubot-matrix .  If not, see <http://www.gnu.org/licenses/>.
+"""
+Small helper functions for formatting and common chat tasks
+"""
 
 import logging
 from datetime import datetime

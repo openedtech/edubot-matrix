@@ -24,9 +24,9 @@ from nio import (
 )
 
 from edubot_matrix import g
-from edubot_matrix.chat_functions import id_to_username, send_text_to_room
 from edubot_matrix.config import Config
 from edubot_matrix.storage import Storage
+from edubot_matrix.utils import id_to_username, send_text_to_room
 
 logger = logging.getLogger(__name__)
 
@@ -189,12 +189,23 @@ class Command:
 
         admin_id = self.args[0]
 
+        room_admins = self.store.list_room_admins(self.room.room_id)
+
         # If the user ID is not an admin in this room
-        if admin_id not in self.store.list_room_admins(self.room.room_id):
+        if admin_id not in room_admins:
             await send_text_to_room(
                 self.client,
                 self.room.room_id,
                 f"{admin_id} is not an admin in this room!",
+            )
+            return
+
+        # If there is only one admin in this room
+        if len(room_admins) == 1:
+            await send_text_to_room(
+                self.client,
+                self.room.room_id,
+                f"You are the only admin in this room, and cannot be removed.",
             )
             return
 

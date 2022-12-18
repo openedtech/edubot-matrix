@@ -32,9 +32,9 @@ from nio import (
 
 from edubot_matrix import g
 from edubot_matrix.callbacks import Callbacks
-from edubot_matrix.chat_functions import id_to_username
 from edubot_matrix.config import Config
 from edubot_matrix.storage import Storage
+from edubot_matrix.utils import id_to_username
 
 logger = logging.getLogger(__name__)
 

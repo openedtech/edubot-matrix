@@ -20,10 +20,10 @@ from nio import AsyncClient, InviteMemberEvent, JoinError, MatrixRoom, RoomMessa
 
 from edubot_matrix import g
 from edubot_matrix.bot_commands import Command
-from edubot_matrix.chat_functions import send_text_to_room
 from edubot_matrix.config import Config
 from edubot_matrix.message_responses import Message
 from edubot_matrix.storage import Storage
+from edubot_matrix.utils import send_text_to_room
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +82,7 @@ class Callbacks:
 
     async def _join_message(self, room_id):
         """Send greeting to room when we join."""
+        # Wait to allow time for the bot to join the room
         await asyncio.sleep(3)
         await send_text_to_room(self.client, room_id, g.config.greeting)
 
@@ -109,9 +110,10 @@ class Callbacks:
         else:
             logger.error("Unable to join room: %s", room.room_id)
 
+        # Send bot greeting to the room in the near future
         asyncio.ensure_future(self._join_message(room.room_id))
 
-        # The user who invited the bot and the room owner should be made admins.
+        # The user who invited the bot and the room creator should be made admins.
         self.store.add_room_admin(room.room_id, event.sender)
 
         # room.creator is sometimes an empty string
