@@ -65,6 +65,9 @@ class Command:
         self.is_admin = store.check_if_admin(self.room.room_id, self.event.sender)
         self.raw_message_lst: list[str] = command_and_args.split(" ")
 
+        # Remove empty strings from list
+        self.raw_message_lst = [i for i in self.raw_message_lst if i]
+
         # The attributes below are initialised in process() because async features are not allowed in __init__()
         self.command = ""
         self.args: list[str] = []
@@ -88,6 +91,7 @@ class Command:
 
         if not self.is_admin:
             await self._bad_perms()
+            return
 
         # Query matrix for members in this room
         raw_members: JoinedMembersResponse | JoinedMembersError = (
