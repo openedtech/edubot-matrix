@@ -15,9 +15,13 @@
 
 import logging
 import sqlite3
+import time
+from datetime import datetime
 from typing import Any, Dict
 
 from edubot_matrix import g
+from edubot_matrix.types import FeedInfo
+from edubot_matrix.utils import unix_utc
 
 # The latest migration version of the database.
 #
@@ -142,7 +146,7 @@ class Storage:
             CREATE TABLE IF NOT EXISTS rss_feed (
             url STRING PRIMARY KEY,
             -- Last time the feed was updated
-            last_update INTEGER
+            last_update INTEGER NOT NULL
             )
             """
         )
@@ -337,10 +341,10 @@ class Storage:
 
         self._execute(
             """
-            INSERT OR IGNORE INTO rss_feed(url)
-            VALUES (?);
+            INSERT OR IGNORE INTO rss_feed(url, last_update)
+            VALUES (?, ?);
             """,
-            (rss_url,),
+            (rss_url, unix_utc()),
         )
 
         self._execute(
@@ -402,7 +406,7 @@ class Storage:
         Get all the rooms subscribed to an RSS feed.
 
         Args:
-            rss_url:
+            rss_url: The URL of an RSS feed.
 
         Returns:
             A list of Matrix room ID's.
@@ -420,19 +424,39 @@ class Storage:
         # Unpack list of tuples
         return [i[0] for i in raw_list]
 
-    def get_rss_feeds(self) -> list[tuple[str, int]]:
+    def list_rss_feeds(self) -> list[FeedInfo]:
         """
         Get all the RSS feeds currently subscribed to.
 
         Returns:
-            A list of tuples containing the RSS feed URL and the time the feed was last updated.
-            [(url, last_update), ... ]
+            A list of FeedInfo dicts.
         """
 
         self._execute(
             """
-            SELECT DISTINCT url, rss_feed.last_update from rss_subscription;
+            SELECT DISTINCT s.url, f.last_update FROM rss_subscription s
+            JOIN rss_feed f ON s.url = f.url;
             """
         )
 
-        return self.cursor.fetchall()
+        return [
+            {"url": i[0], "last_update": datetime.fromtimestamp(i[1])}
+            for i in self.cursor.fetchall()
+        ]
+
+    def change_rss_last_update(self, rss_url: str) -> None:
+        """
+        Changes the last_update value
+
+        Args:
+            rss_url: The URL of an RSS feed.
+        """
+        self._execute(
+            """
+            UPDATE rss_feed
+            SET last_update = ?
+            WHERE url = ?;
+            """,
+            (round(time.time()), rss_url),
+        )
+        self.conn.commit()

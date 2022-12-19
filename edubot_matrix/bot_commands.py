@@ -25,6 +25,7 @@ from nio import (
 
 from edubot_matrix import g
 from edubot_matrix.config import Config
+from edubot_matrix.rss import validate_rss_url
 from edubot_matrix.storage import Storage
 from edubot_matrix.utils import id_to_username, send_text_to_room
 
@@ -102,6 +103,12 @@ class Command:
         match self.command:
             case "help":
                 await self._show_help()
+            case "subscribe":
+                await self._add_rss_feed()
+            case "unsubscribe":
+                await self._remove_rss_feed()
+            case "feeds":
+                await self._list_rss_feeds()
             case "add":
                 await self._add_admin()
             case "remove":
@@ -130,13 +137,15 @@ class Command:
             self.client,
             self.room.room_id,
             (
-                f"#Room Admin commands:\n"
-                f"`{g.config.command_prefix} rss` Manage RSS feeds.\n\n"
-                f"`{g.config.command_prefix} add user_id` make a user an admin in this room.\n\n"
-                f"`{g.config.command_prefix} remove user_id` revoke a user's admin rights in this room.\n\n"
-                f"`{g.config.command_prefix} admins` list who is an admin in this room.\n\n"
+                f"#Room Admin commands:"
+                f"`{g.config.command_prefix} subscribe` Subscribe to an RSS feed.\n\n"
+                f"`{g.config.command_prefix} unsubscribe` Unsubscribe from an RSS feed.\n\n"
+                f"`{g.config.command_prefix} feeds` List subscribed RSS feeds.\n\n"
+                f"`{g.config.command_prefix} add user_id` Make a user an admin in this room.\n\n"
+                f"`{g.config.command_prefix} remove user_id` Revoke a user's admin rights in this room.\n\n"
+                f"`{g.config.command_prefix} admins` List who is an admin in this room.\n\n"
                 f"#Super Admin commands:\n"
-                f"`{g.config.command_prefix} greeting [msg]` change greeting, if no msg is supplied the "
+                f"`{g.config.command_prefix} greeting [msg]` Change the bot's greeting, if no msg is supplied the "
                 f"current greeting is shown.\n"
             ),
         )
@@ -240,4 +249,67 @@ class Command:
 
         await send_text_to_room(
             self.client, self.room.room_id, f"Admins in this room: {admins}"
+        )
+
+    async def _list_rss_feeds(self):
+        """Send a list of RSS feeds this room is subscribed to."""
+        feeds: str = "\n".join(self.store.get_room_subscriptions(self.room.room_id))
+
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            f"RSS subscriptions:\n{feeds}",
+            markdown_convert=False,
+        )
+
+    async def _add_rss_feed(self):
+        """Subscribe this room to an RSS feed"""
+        if not self.args:
+            await self._show_help()
+            return
+
+        url = self.args[0].strip()
+
+        subscribed_feeds = self.store.get_room_subscriptions(self.room.room_id)
+
+        if url in subscribed_feeds:
+            await send_text_to_room(
+                self.client,
+                self.room.room_id,
+                "The room is already subscribed to this RSS feed!",
+            )
+            return
+
+        if not validate_rss_url(self.args[0]):
+            await send_text_to_room(
+                self.client, self.room.room_id, f"'{url}' is not a valid RSS feed."
+            )
+            return
+
+        self.store.add_rss_feed(self.room.room_id, url)
+
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            f"Subscribed to {url}! I'll send new updates to the room.",
+        )
+
+    async def _remove_rss_feed(self):
+        """Unsubscribe this room from an RSS feed."""
+        if not self.args:
+            await self._show_help()
+            return
+
+        url = self.args[0].strip()
+
+        if url not in self.store.get_room_subscriptions(self.room.room_id):
+            await send_text_to_room(
+                self.client, self.room.room_id, f"This room is not subscribed to {url}."
+            )
+            return
+
+        self.store.remove_rss_feed(self.room.room_id, url)
+
+        await send_text_to_room(
+            self.client, self.room.room_id, f"Unsubscribed from {url}."
         )

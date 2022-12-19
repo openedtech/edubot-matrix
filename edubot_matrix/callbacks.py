@@ -18,7 +18,7 @@ import logging
 
 from nio import AsyncClient, InviteMemberEvent, JoinError, MatrixRoom, RoomMessageText
 
-from edubot_matrix import g, rss
+from edubot_matrix import g
 from edubot_matrix.bot_commands import Command
 from edubot_matrix.config import Config
 from edubot_matrix.message_responses import Message
@@ -135,10 +135,3 @@ class Callbacks:
         if event.state_key == self.client.user_id:
             # This is our own membership (invite) event
             await self.invite(room, event)
-
-    async def sync_rss_feeds(self) -> None:
-        """
-        Syncs RSS feeds and sends the latest changes to rooms.
-        """
-
-        rss.get_updates(self.store.get_rss_feeds())

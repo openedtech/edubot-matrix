@@ -17,7 +17,6 @@
 import asyncio
 import logging
 import sys
-from datetime import datetime
 from time import sleep
 
 from aiohttp import ClientConnectionError, ServerDisconnectedError
@@ -34,6 +33,7 @@ from nio import (
 from edubot_matrix import g
 from edubot_matrix.callbacks import Callbacks
 from edubot_matrix.config import Config
+from edubot_matrix.rss import sync_rss_feeds
 from edubot_matrix.storage import Storage
 from edubot_matrix.utils import id_to_username
 
@@ -93,7 +93,7 @@ async def main():
         callbacks.invite_event_filtered_callback, (InviteMemberEvent,)
     )
 
-    last_rss_sync: datetime = datetime.utcnow()
+    asyncio.create_task(sync_rss_feeds(client, store))
 
     # Keep trying to reconnect on failure (with some time in-between)
     while True:
