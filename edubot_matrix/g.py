@@ -13,12 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with edubot-matrix .  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
 
 from edubot.bot import EduBot
 
 from edubot_matrix.config import Config
 
-edubot: Union[EduBot, None] = None
+edubot: EduBot | None = None
 
-config: Union[Config, None] = None
+config: Config | None = None

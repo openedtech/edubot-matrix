@@ -50,17 +50,15 @@ class Storage:
         self.cursor = self.conn.cursor()
         self.db_type = database_config["type"]
 
+        self._initial_setup()
+
         # Try to check the current migration version
-        migration_level = 0
-        try:
-            self._execute("SELECT version FROM migration_version")
-            row = self.cursor.fetchone()
-            migration_level = row[0]
-        except Exception:
-            self._initial_setup()
-        finally:
-            if migration_level < latest_migration_version:
-                self._run_migrations(migration_level)
+        self._execute("SELECT version FROM migration_version")
+        row = self.cursor.fetchone()
+        migration_level = row[0]
+
+        if migration_level < latest_migration_version:
+            self._run_migrations(migration_level)
 
         logger.info(f"Database initialization of type '{self.db_type}' complete")
 
@@ -87,13 +85,16 @@ class Storage:
         """Initial setup of the database"""
         logger.info("Performing initial database setup...")
 
+        # Make sure Foreign key constraints are checked.
+        self._execute("PRAGMA foreign_keys = ON;")
+
         # Set up the migration_version table
         self._execute(
             """
             CREATE TABLE IF NOT EXISTS migration_version (
                 version INTEGER PRIMARY KEY
             )
-        """
+            """
         )
 
         # Initially set the migration version to 0
@@ -102,7 +103,7 @@ class Storage:
             INSERT OR IGNORE INTO migration_version (
                 version
             ) VALUES (?)
-        """,
+            """,
             (0,),
         )
 
@@ -130,9 +131,32 @@ class Storage:
                 admin_id STRING,
                 room_id STRING,
                 PRIMARY KEY (admin_id, room_id),
-                FOREIGN KEY (admin_id) REFERENCES admin(user_id),
-                FOREIGN KEY (room_id) references room(room_id)
+                FOREIGN KEY (admin_id) REFERENCES admin(admin_id) ON DELETE CASCADE,
+                FOREIGN KEY (room_id) references room(room_id) ON DELETE CASCADE
             );
+            """
+        )
+
+        self._execute(
+            """
+            CREATE TABLE IF NOT EXISTS rss_feed (
+            url STRING PRIMARY KEY,
+            -- Last time the feed was updated
+            last_update INTEGER
+            )
+            """
+        )
+
+        self._execute(
+            """
+            CREATE TABLE IF NOT EXISTS rss_subscription (
+            url STRING,
+            room_id STRING,
+            PRIMARY KEY (url, room_id),
+            FOREIGN KEY (url) references rss_feed(url) ON DELETE CASCADE,
+            FOREIGN KEY (room_id) references room(room_id) ON DELETE CASCADE
+            )
+
             """
         )
 
@@ -225,6 +249,7 @@ class Storage:
     def remove_room_admin(self, room_id, admin_id):
         """
         Delete an admin from a room.
+
         Args:
             room_id: A Matrix room ID.
             admin_id: A Matrix user ID.
@@ -299,3 +324,115 @@ class Storage:
         )
         self.conn.commit()
         logger.info(f"Set personality '{personality}' in '{room_id}'")
+
+    def add_rss_feed(self, room_id: str, rss_url: str) -> None:
+        """
+        Adds an RSS feed subscription to a room.
+
+        Args:
+            room_id: A Matrix room ID.
+            rss_url: The URL of an RSS feed.
+        """
+        self._add_room_to_db(room_id)
+
+        self._execute(
+            """
+            INSERT OR IGNORE INTO rss_feed(url)
+            VALUES (?);
+            """,
+            (rss_url,),
+        )
+
+        self._execute(
+            """
+            INSERT OR IGNORE INTO rss_subscription(room_id, url)
+            VALUES (?, ?)
+            """,
+            (room_id, rss_url),
+        )
+
+        self.conn.commit()
+        logger.info(f"Subscribed to feed '{rss_url}' in '{room_id}'")
+
+    def remove_rss_feed(self, room_id: str, rss_url: str) -> None:
+        """
+        Removes an RSS feed subscription from a room.
+
+        Args:
+            room_id: A Matrix room ID.
+            rss_url: The URL of an RSS feed.
+        """
+
+        self._execute(
+            """
+            DELETE FROM rss_subscription
+            WHERE room_id = ?
+            AND url = ?;
+            """,
+            (room_id, rss_url),
+        )
+        self.conn.commit()
+        logger.info(f"Unsubscribed from feed '{rss_url}' in '{room_id}'")
+
+    def get_room_subscriptions(self, room_id: str) -> list[str]:
+        """
+        List the rss feeds a room is subscribed to.
+
+        Args:
+            room_id: A Matrix room ID.
+
+        Returns:
+            A list of RSS feed URLS.
+        """
+
+        self._execute(
+            """
+            SELECT url FROM rss_subscription
+            WHERE room_id = ?;
+            """,
+            (room_id,),
+        )
+        raw_list: list[tuple[str]] = self.cursor.fetchall()
+
+        # Unpack list of tuples
+        return [i[0] for i in raw_list]
+
+    def get_subscribed_rooms(self, rss_url: str) -> list[str]:
+        """
+        Get all the rooms subscribed to an RSS feed.
+
+        Args:
+            rss_url:
+
+        Returns:
+            A list of Matrix room ID's.
+        """
+        self._execute(
+            """
+            SELECT room_id FROM rss_subscription
+            WHERE url = ?;
+            """,
+            (rss_url,),
+        )
+
+        raw_list: list[tuple[str]] = self.cursor.fetchall()
+
+        # Unpack list of tuples
+        return [i[0] for i in raw_list]
+
+    def get_rss_feeds(self) -> list[tuple[str, int]]:
+        """
+        Get all the RSS feeds currently subscribed to.
+
+        Returns:
+            A list of tuples containing the RSS feed URL and the time the feed was last updated.
+            [(url, last_update), ... ]
+        """
+
+        self._execute(
+            """
+            SELECT DISTINCT url, rss_feed.last_update from rss_subscription;
+            """
+        )
+
+        return self.cursor.fetchall()
