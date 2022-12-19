@@ -13,6 +13,7 @@ matrix-nio = {version = "^0.20.0", extras = ["e2e"]}
 pyyaml = "^6.0"
 markdown = "^3.4.1"
 edubot = "^0.3.0"
+feedparser = "^6.0.10"
 
 
 [build-system]

@@ -17,7 +17,7 @@ Small helper functions for formatting and common chat tasks
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Union
 
 from edubot.types import MessageInfo
@@ -140,6 +140,13 @@ def convert_room_messages_to_dict(
         )
 
     return result_lst
+
+
+def unix_utc() -> int:
+    """
+    Get the UTC Unix timestamp in seconds.
+    """
+    return round(datetime.now(timezone.utc).timestamp())
 
 
 def validate_user_id(user_id: str):

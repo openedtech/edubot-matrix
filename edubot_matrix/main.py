@@ -33,6 +33,7 @@ from nio import (
 from edubot_matrix import g
 from edubot_matrix.callbacks import Callbacks
 from edubot_matrix.config import Config
+from edubot_matrix.rss import sync_rss_feeds
 from edubot_matrix.storage import Storage
 from edubot_matrix.utils import id_to_username
 
@@ -51,7 +52,12 @@ async def main():
 
     # Read the parsed config file and create a Config object
     config = Config(config_path)
+
+    # Allow the config to be imported anywhere
+    # TODO: Maybe there is a better way to do this
     g.config = config
+
+    # Add some config fields that are not used by the nio lib
     g.config.bot_name = id_to_username(config.user_id)
     g.config.command_prefix = f"!{g.config.bot_name}"
     g.edubot = EduBot(g.config.bot_name, "matrix", config.original_prompt)
@@ -86,6 +92,8 @@ async def main():
     client.add_event_callback(
         callbacks.invite_event_filtered_callback, (InviteMemberEvent,)
     )
+
+    asyncio.create_task(sync_rss_feeds(client, store))
 
     # Keep trying to reconnect on failure (with some time in-between)
     while True:

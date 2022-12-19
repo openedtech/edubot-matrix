@@ -11,13 +11,21 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with edubot-matrix .  If not, see <http://www.gnu.org/licenses/>.
+# along with edubot-matrix.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Custom Types
+"""
+from datetime import datetime
+from typing import TypedDict
 
 
-from edubot.bot import EduBot
+class FeedEntry(TypedDict):
+    feed_url: str
+    entry_url: str
+    title: str
+    description: str
 
-from edubot_matrix.config import Config
 
-edubot: EduBot | None = None
-
-config: Config | None = None
+class FeedInfo(TypedDict):
+    url: str
+    last_update: datetime
