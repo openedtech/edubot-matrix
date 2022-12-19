@@ -82,7 +82,7 @@ def get_rss_updates(feed_infos: list[FeedInfo]) -> list[FeedEntry]:
 
 async def sync_rss_feeds(client: AsyncClient, store: Storage) -> None:
     """
-    Syncs RSS feeds and sends the latest changes to rooms.
+    Syncs RSS feeds and sends the latest changes to rooms on an interval.
     This function runs in an infinite loop.
 
     Args:
@@ -91,7 +91,8 @@ async def sync_rss_feeds(client: AsyncClient, store: Storage) -> None:
     """
 
     while True:
-        await asyncio.sleep(15 * 60)
+        # Wait 10 minutes before repeating
+        await asyncio.sleep(10 * 60)
         logger.info("Syncing RSS feeds")
         updates: list[FeedEntry] = get_rss_updates(store.list_rss_feeds())
 

@@ -141,7 +141,7 @@ class Command:
             self.client,
             self.room.room_id,
             (
-                f"#Room Admin commands:"
+                f"#Room Admin commands:\n"
                 f"`{g.config.command_prefix} subscribe` Subscribe to an RSS feed.\n\n"
                 f"`{g.config.command_prefix} unsubscribe` Unsubscribe from an RSS feed.\n\n"
                 f"`{g.config.command_prefix} feeds` List subscribed RSS feeds.\n\n"
