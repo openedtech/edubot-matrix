@@ -169,11 +169,12 @@ class Command:
         """Set a new greeting or print the current one."""
         if self.args:
             g.config.greeting = " ".join(self.args)
-            with open("GREETING", "w") as f:
-                f.write(g.config.greeting)
+            self.store.set_greeting(g.config.greeting)
             await send_text_to_room(self.client, self.room.room_id, "New greeting set!")
         else:
-            await send_text_to_room(self.client, self.room.room_id, g.config.greeting)
+            await send_text_to_room(
+                self.client, self.room.room_id, self.store.get_greeting()
+            )
 
     async def _add_admin(self) -> None:
         """Add an admin to the room."""

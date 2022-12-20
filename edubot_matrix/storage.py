@@ -112,6 +112,24 @@ class Storage:
         )
 
         self._execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS greeting (
+                id INTEGER PRIMARY KEY CHECK (id=0),
+                greeting STRING NOT NULL
+            )
+            """,
+        )
+
+        default_greeting = f"Hi, my name is {g.config.bot_name}!"
+        self._execute(
+            """
+            INSERT OR IGNORE INTO greeting (id, greeting)
+            VALUES (0, ?);
+            """,
+            (default_greeting,),
+        )
+
+        self._execute(
             """
             CREATE TABLE IF NOT EXISTS admin (
                 admin_id STRING PRIMARY KEY
@@ -218,6 +236,34 @@ class Storage:
         )
         self.conn.commit()
         logger.info(f"Added room '{room_id}' to DB")
+
+    def set_greeting(self, greeting: str) -> None:
+        """
+        Set a new greeting for the bot.
+        Args:
+            greeting: The greeting to set.
+        """
+        # noinspection SqlWithoutWhere
+        self._execute(
+            """
+            UPDATE greeting
+            SET greeting = ?;
+            """,
+            (greeting,),
+        )
+        self.conn.commit()
+
+    def get_greeting(self) -> str:
+        """
+        Get the bot's current greeting.
+        """
+        self._execute(
+            """
+            SELECT greeting FROM greeting;
+            """
+        )
+
+        return self.cursor.fetchone()[0]
 
     def set_room_admin(self, room_id: str, admin_id: str) -> None:
         """

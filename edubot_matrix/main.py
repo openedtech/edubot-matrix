@@ -65,6 +65,8 @@ async def main():
     # Configure the database
     store = Storage(config.database)
 
+    g.config.greeting = store.get_greeting()
+
     # Configuration options for the AsyncClient
     client_config = AsyncClientConfig(
         max_limit_exceeded=0,

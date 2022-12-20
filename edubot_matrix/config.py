@@ -47,13 +47,6 @@ class Config:
     def _parse_config_values(self):
         """Read and validate each config option"""
 
-        self.greeting = "Hi, my name is MoodleBot!"
-        try:
-            with open("GREETING", "r") as f:
-                self.greeting = f.read()
-        except FileNotFoundError:
-            pass
-
         # Logging setup
         formatter = logging.Formatter(
             "%(asctime)s | %(name)s [%(levelname)s] %(message)s"
