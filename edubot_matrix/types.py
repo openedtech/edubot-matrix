@@ -18,9 +18,11 @@ Custom Types
 from datetime import datetime
 from typing import TypedDict
 
+from typing_extensions import NotRequired
+
 
 class FeedInfo(TypedDict):
-    name: str | None
+    name: NotRequired[str]
     url: str
     last_update: datetime
 

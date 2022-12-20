@@ -114,11 +114,11 @@ class Callbacks:
         asyncio.ensure_future(self._join_message(room.room_id))
 
         # The user who invited the bot and the room creator should be made admins.
-        self.store.add_room_admin(room.room_id, event.sender)
+        self.store.set_room_admin(room.room_id, event.sender)
 
         # room.creator is sometimes an empty string
         if room.creator and room.creator != event.sender:
-            self.store.add_room_admin(room.room_id, room.creator)
+            self.store.set_room_admin(room.room_id, room.creator)
 
         # Successfully joined room
         logger.info(f"Joined {room.room_id}")

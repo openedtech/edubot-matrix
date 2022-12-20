@@ -96,9 +96,9 @@ async def sync_rss_feeds(client: AsyncClient, store: Storage) -> None:
         updates: list[FeedEntry] = get_rss_updates(store.list_rss_feeds())
 
         for update in updates:
-            store.change_rss_last_update(update["feed"]["url"])
+            store.set_rss_last_update(update["feed"]["url"])
             # Get all the rooms subscribed to this feed
-            for room_id in store.get_subscribed_rooms(update["feed"]["url"]):
+            for room_id in store.get_rooms_from_feed(update["feed"]["url"]):
                 await send_text_to_room(
                     client,
                     room_id,

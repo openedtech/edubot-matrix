@@ -107,8 +107,11 @@ class Message:
         # Convert the message events into the format required by edubot lib
         context = convert_room_messages_to_dict(events)
 
-        # Get the GPT completion
-        completion = g.edubot.gpt_answer(context, events.room_id)
+        # Get the GPT completion and use the custom room personality if it exists
+        if personality := self.store.get_personality(self.room.room_id):
+            completion = g.edubot.gpt_answer(context, events.room_id, personality)
+        else:
+            completion = g.edubot.gpt_answer(context, events.room_id)
 
         await send_text_to_room(
             self.client, self.room.room_id, completion, markdown_convert=False

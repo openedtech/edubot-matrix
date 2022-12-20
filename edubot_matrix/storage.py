@@ -219,7 +219,7 @@ class Storage:
         self.conn.commit()
         logger.info(f"Added room '{room_id}' to DB")
 
-    def add_room_admin(self, room_id: str, admin_id: str) -> None:
+    def set_room_admin(self, room_id: str, admin_id: str) -> None:
         """
         Adds an admin to a room
 
@@ -329,6 +329,31 @@ class Storage:
         self.conn.commit()
         logger.info(f"Set personality '{personality}' in '{room_id}'")
 
+    def get_personality(self, room_id: str) -> str:
+        """
+        Gets the personality for a room.
+
+        Args:
+            room_id: A Matrix room ID.
+
+        Returns:
+            A personality string.
+        """
+        self._execute(
+            """
+            SELECT personality FROM room
+            WHERE room_id = ?;
+            """,
+            (room_id,),
+        )
+
+        personality: str | None = self.cursor.fetchone()[0]
+
+        if personality is None:
+            personality = ""
+
+        return personality
+
     def add_rss_feed(self, room_id: str, rss_url: str) -> None:
         """
         Adds an RSS feed subscription to a room.
@@ -378,7 +403,7 @@ class Storage:
         self.conn.commit()
         logger.info(f"Unsubscribed from feed '{rss_url}' in '{room_id}'")
 
-    def get_room_subscriptions(self, room_id: str) -> list[str]:
+    def get_feeds_from_room(self, room_id: str) -> list[str]:
         """
         List the rss feeds a room is subscribed to.
 
@@ -401,7 +426,7 @@ class Storage:
         # Unpack list of tuples
         return [i[0] for i in raw_list]
 
-    def get_subscribed_rooms(self, rss_url: str) -> list[str]:
+    def get_rooms_from_feed(self, rss_url: str) -> list[str]:
         """
         Get all the rooms subscribed to an RSS feed.
 
@@ -444,9 +469,9 @@ class Storage:
             for i in self.cursor.fetchall()
         ]
 
-    def change_rss_last_update(self, rss_url: str) -> None:
+    def set_rss_last_update(self, rss_url: str) -> None:
         """
-        Changes the last_update value
+        Changes the last_update value of an RSS feed.
 
         Args:
             rss_url: The URL of an RSS feed.

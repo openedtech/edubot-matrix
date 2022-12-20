@@ -107,6 +107,8 @@ class Command:
         match self.command:
             case "help":
                 await self._show_help()
+            case "personality":
+                await self._personality()
             case "subscribe":
                 await self._add_rss_feed()
             case "unsubscribe":
@@ -142,11 +144,13 @@ class Command:
             self.room.room_id,
             (
                 f"#Room Admin commands:\n"
-                f"`{g.config.command_prefix} subscribe` Subscribe to an RSS feed.\n\n"
+                f"`{g.config.command_prefix} personality [new personality]` Change or print the personality of the "
+                f"bot.\n\n "
+                f"`{g.config.command_prefix} subscribe {{url}}` Subscribe to an RSS feed.\n\n"
                 f"`{g.config.command_prefix} unsubscribe` Unsubscribe from an RSS feed.\n\n"
                 f"`{g.config.command_prefix} feeds` List subscribed RSS feeds.\n\n"
-                f"`{g.config.command_prefix} add user_id` Make a user an admin in this room.\n\n"
-                f"`{g.config.command_prefix} remove user_id` Revoke a user's admin rights in this room.\n\n"
+                f"`{g.config.command_prefix} add {{user_id}}` Make a user an admin in this room.\n\n"
+                f"`{g.config.command_prefix} remove {{user_id}}` Revoke a user's admin rights in this room.\n\n"
                 f"`{g.config.command_prefix} admins` List who is an admin in this room.\n\n"
                 f"#Super Admin commands:\n"
                 f"`{g.config.command_prefix} greeting [msg]` Change the bot's greeting, if no msg is supplied the "
@@ -187,7 +191,7 @@ class Command:
             )
             return
 
-        self.store.add_room_admin(self.room.room_id, new_admin)
+        self.store.set_room_admin(self.room.room_id, new_admin)
 
         await send_text_to_room(
             self.client, self.room.room_id, f"{new_admin} is now an admin in this room!"
@@ -257,7 +261,7 @@ class Command:
 
     async def _list_rss_feeds(self):
         """Send a list of RSS feeds this room is subscribed to."""
-        feeds: str = "\n".join(self.store.get_room_subscriptions(self.room.room_id))
+        feeds: str = "\n".join(self.store.get_feeds_from_room(self.room.room_id))
 
         await send_text_to_room(
             self.client,
@@ -274,7 +278,7 @@ class Command:
 
         url = self.args[0].strip()
 
-        subscribed_feeds = self.store.get_room_subscriptions(self.room.room_id)
+        subscribed_feeds = self.store.get_feeds_from_room(self.room.room_id)
 
         if url in subscribed_feeds:
             await send_text_to_room(
@@ -306,7 +310,7 @@ class Command:
 
         url = self.args[0].strip()
 
-        if url not in self.store.get_room_subscriptions(self.room.room_id):
+        if url not in self.store.get_feeds_from_room(self.room.room_id):
             await send_text_to_room(
                 self.client, self.room.room_id, f"This room is not subscribed to {url}."
             )
@@ -316,4 +320,29 @@ class Command:
 
         await send_text_to_room(
             self.client, self.room.room_id, f"Unsubscribed from {url}."
+        )
+
+    async def _personality(self):
+        if not self.args:
+            personality = self.store.get_personality(self.room.room_id)
+
+            if not personality:
+                personality = g.config.original_prompt
+
+            await send_text_to_room(
+                self.client,
+                self.room.room_id,
+                f"Current personality:\n{personality}",
+                markdown_convert=False,
+            )
+            return
+
+        personality = " ".join(self.args)
+        self.store.set_personality(self.room.room_id, personality)
+
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            f"New Personality:\n{personality}",
+            markdown_convert=False,
         )
