@@ -392,13 +392,12 @@ class Storage:
             """,
             (room_id,),
         )
+        res = self.cursor.fetchone()
 
-        personality: str | None = self.cursor.fetchone()[0]
+        if res is None:
+            return ""
 
-        if personality is None:
-            personality = ""
-
-        return personality
+        return res[0]
 
     def add_rss_feed(self, room_id: str, rss_url: str) -> None:
         """
