@@ -50,16 +50,15 @@ def get_rss_updates(feed_infos: list[FeedInfo]) -> list[FeedEntry]:
 
     for feed_info in feed_infos:
         url: str = feed_info["url"]
-
         last_update: datetime = feed_info["last_update"]
 
         parsed = feedparser.parse(url)
+
         if parsed["bozo"]:
-            logger.error(f"Could not parse feed {url}: {e}")
+            logger.error(f"Could not parse feed {url}")
             continue
 
-        if not parsed:
-            continue
+        feed_info["name"] = parsed.feed.title
 
         items = [
             entry
@@ -70,8 +69,8 @@ def get_rss_updates(feed_infos: list[FeedInfo]) -> list[FeedEntry]:
         for item in items:
             new_feed_entries.append(
                 {
-                    "feed_url": url,
-                    "entry_url": item.get("link", ""),
+                    "feed": FeedInfo,
+                    "url": item.get("link", ""),
                     "title": item.get("title", ""),
                     "description": item.get("description", ""),
                 }
@@ -97,13 +96,13 @@ async def sync_rss_feeds(client: AsyncClient, store: Storage) -> None:
         updates: list[FeedEntry] = get_rss_updates(store.list_rss_feeds())
 
         for update in updates:
-            store.change_rss_last_update(update["feed_url"])
+            store.change_rss_last_update(update["feed"]["url"])
             # Get all the rooms subscribed to this feed
-            for room_id in store.get_subscribed_rooms(update["feed_url"]):
+            for room_id in store.get_subscribed_rooms(update["feed"]["url"]):
                 await send_text_to_room(
                     client,
                     room_id,
-                    f"[{update['title']}]({update['entry_url']}): {update['description']}",
+                    f"[{update['feed']['name']}: {update['title']}]({update['url']})",
                 )
 
         logger.info("Done syncing RSS feeds")

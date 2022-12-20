@@ -19,13 +19,14 @@ from datetime import datetime
 from typing import TypedDict
 
 
-class FeedEntry(TypedDict):
-    feed_url: str
-    entry_url: str
-    title: str
-    description: str
-
-
 class FeedInfo(TypedDict):
+    name: str | None
     url: str
     last_update: datetime
+
+
+class FeedEntry(TypedDict):
+    feed: FeedInfo
+    url: str
+    title: str
+    description: str
