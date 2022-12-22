@@ -102,7 +102,9 @@ async def sync_rss_feeds(client: AsyncClient, store: Storage) -> None:
                 await send_text_to_room(
                     client,
                     room_id,
-                    f"{update['feed']['name']}: [{update['title']}]({update['url']})",
+                    # A zero width space is added to the beginning of the feed name.
+                    # This stops feed names starting with hashtags being converted into markdown headers.
+                    f"&#8203;{update['feed']['name']}: [{update['title']}]({update['url']})",
                 )
 
         logger.info("Done syncing RSS feeds")
