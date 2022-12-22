@@ -69,7 +69,7 @@ def get_rss_updates(feed_infos: list[FeedInfo]) -> list[FeedEntry]:
         for item in items:
             new_feed_entries.append(
                 {
-                    "feed": FeedInfo,
+                    "feed": feed_info,
                     "url": item.get("link", ""),
                     "title": item.get("title", ""),
                     "description": item.get("description", ""),
@@ -102,7 +102,7 @@ async def sync_rss_feeds(client: AsyncClient, store: Storage) -> None:
                 await send_text_to_room(
                     client,
                     room_id,
-                    f"[{update['feed']['name']}: {update['title']}]({update['url']})",
+                    f"{update['feed']['name']}: [{update['title']}]({update['url']})",
                 )
 
         logger.info("Done syncing RSS feeds")
