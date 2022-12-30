@@ -28,6 +28,7 @@ from nio import (
     LocalProtocolError,
     LoginError,
     RoomMessageText,
+    UnknownEvent,
 )
 
 from edubot_matrix import g
@@ -94,6 +95,7 @@ async def main():
     client.add_event_callback(
         callbacks.invite_event_filtered_callback, (InviteMemberEvent,)
     )
+    client.add_event_callback(callbacks.unknown, UnknownEvent)
 
     asyncio.create_task(sync_rss_feeds(client, store))
 
