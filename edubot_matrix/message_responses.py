@@ -12,11 +12,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with edubot-matrix .  If not, see <http://www.gnu.org/licenses/>.
-
 import logging
+import re
+import tempfile
 from random import random
 
-from nio import AsyncClient, MatrixRoom, RoomMessagesError, RoomMessageText
+import aiofiles.os
+from nio import (
+    AsyncClient,
+    MatrixRoom,
+    RoomMessagesError,
+    RoomMessageText,
+    UploadResponse,
+)
 
 from edubot_matrix import g
 from edubot_matrix.config import Config
@@ -64,7 +72,10 @@ class Message:
 
     async def process(self) -> None:
         """Process and possibly respond to the message"""
-        if self._check_if_response():
+        if prompt := re.search(g.IMAGEGEN_REGEX, self.message_content).group(4):
+            await self._respond_image(prompt)
+
+        elif self._check_if_response():
             await self._respond()
 
     def _check_if_response(self):
@@ -116,3 +127,67 @@ class Message:
         await send_text_to_room(
             self.client, self.room.room_id, completion, markdown_convert=False
         )
+
+    async def _respond_image(self, prompt) -> None:
+        """
+
+        Args:
+            prompt:
+        """
+        img = g.edubot.generate_image(prompt)
+
+        f = tempfile.NamedTemporaryFile()
+        img.save(f, format="png")
+
+        (width, height) = img.size
+
+        file_stat = await aiofiles.os.stat(f.name)
+        async with aiofiles.open(f.name, "r+b") as async_f:
+            # noinspection PyTypeChecker
+            # 'async_f' var is incorrectly shown as being the incorrect type
+            resp, decryption_keys = await self.client.upload(
+                async_f,
+                content_type="image/png",
+                filesize=file_stat.st_size,
+                encrypt=True,
+            )
+            # The temp file is automatically deleted here, because the context manager closes it
+
+        if not isinstance(resp, UploadResponse):
+            logger.error(
+                f"Failed to upload generated image to server for room {self.room.room_id}"
+            )
+            await send_text_to_room(
+                self.client,
+                self.room.room_id,
+                "Sorry, I encountered an error when uploading the image I generated.",
+            )
+            return
+
+        content = {
+            "body": f"An image of {prompt}",
+            "info": {
+                "size": file_stat.st_size,
+                "mimetype": "image/png",
+                "thumbnail_info": None,
+                "w": width,
+                "h": height,
+                "thumbnail_url": None,
+            },
+            "msgtype": "m.image",
+            "file": {
+                "url": resp.content_uri,
+                "key": decryption_keys["key"],
+                "iv": decryption_keys["iv"],
+                "hashes": decryption_keys["hashes"],
+                "v": decryption_keys["v"],
+            },
+        }
+
+        try:
+            await self.client.room_send(
+                self.room.room_id, message_type="m.room.message", content=content
+            )
+            logger.info(f"Image sent to room {self.room.room_id}")
+        except Exception:
+            logger.error(f"Image couldn't be sent to room {self.room.room_id}")

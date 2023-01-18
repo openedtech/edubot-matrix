@@ -91,6 +91,61 @@ async def send_text_to_room(
         logger.exception(f"Unable to send message response to {room_id}")
 
 
+async def send_image_to_room(
+    client: AsyncClient,
+    room_id: str,
+    image_bytes: str,
+    notice: bool = False,
+    markdown_convert: bool = True,
+    reply_to_event_id: Optional[str] = None,
+) -> Union[RoomSendResponse, ErrorResponse]:
+    """Send an image to a matrix room.
+
+    Args:
+        client: The client to communicate to matrix with.
+
+        room_id: The ID of the room to send the message to.
+
+        message: The message content.
+
+        notice: Whether the message should be sent with an "m.notice" message type
+            (will not ping users).
+
+        markdown_convert: Whether to convert the message content to markdown.
+            Defaults to true.
+
+        reply_to_event_id: Whether this message is a reply to another event. The event
+            ID this is message is a reply to.
+
+    Returns:
+        A RoomSendResponse if the request was successful, else an ErrorResponse.
+    """
+    # Determine whether to ping room members or not
+    msgtype = "m.notice" if notice else "m.text"
+
+    content = {
+        "msgtype": msgtype,
+        "body": message,
+    }
+
+    if markdown_convert:
+        content["format"] = "org.matrix.custom.html"
+        content["formatted_body"] = markdown(message)
+
+    if reply_to_event_id:
+        content["m.relates_to"] = {"m.in_reply_to": {"event_id": reply_to_event_id}}
+
+    try:
+        return await client.room_send(
+            room_id,
+            "m.room.message",
+            content,
+            ignore_unverified_devices=True,
+        )
+    except SendRetryError:
+        logger.exception(f"Unable to send message response to {room_id}")
+
+
 def make_pill(user_id: str, displayname: str = None) -> str:
     """Convert a user ID (and optionally a display name) to a formatted user 'pill'
 

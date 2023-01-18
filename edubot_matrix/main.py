@@ -16,6 +16,7 @@
 
 import asyncio
 import logging
+import re
 import sys
 from time import sleep
 
@@ -62,6 +63,9 @@ async def main():
     g.config.bot_name = id_to_username(config.user_id)
     g.config.command_prefix = f"!{g.config.bot_name}"
     g.edubot = EduBot(g.config.bot_name, "matrix", config.original_prompt)
+    g.IMAGEGEN_REGEX = re.compile(
+        rf"(?i)(.*({g.config.bot_name}).*?(imagine|show me|make|draw|image))\s+(.*)"
+    )
 
     # Configure the database
     store = Storage(config.database)
