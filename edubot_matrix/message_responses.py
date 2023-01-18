@@ -72,8 +72,8 @@ class Message:
 
     async def process(self) -> None:
         """Process and possibly respond to the message"""
-        if prompt := re.search(g.IMAGEGEN_REGEX, self.message_content).group(4):
-            await self._respond_image(prompt)
+        if search := re.search(g.IMAGEGEN_REGEX, self.message_content):
+            await self._respond_image(search.group(4))
 
         elif self._check_if_response():
             await self._respond()
@@ -135,6 +135,14 @@ class Message:
             prompt:
         """
         img = g.edubot.generate_image(prompt)
+
+        if img is None:
+            await send_text_to_room(
+                self.client,
+                self.room.room_id,
+                "Sorry this prompt contains inappropriate content.",
+            )
+            return
 
         f = tempfile.NamedTemporaryFile()
         img.save(f, format="png")
