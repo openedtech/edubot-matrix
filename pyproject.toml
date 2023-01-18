@@ -11,6 +11,7 @@ python = "^3.10"
 aiohttp = "^3.8.3"
 matrix-nio = {version = "^0.20.0", extras = ["e2e"]}
 pyyaml = "^6.0"
+markdown = "^3.4.1"
 edubot = "^0.5.0"
 feedparser = "^6.0.10"
 
