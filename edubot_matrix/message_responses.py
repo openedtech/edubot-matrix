@@ -72,21 +72,18 @@ class Message:
 
     async def process(self) -> None:
         """Process and possibly respond to the message"""
-        if search := re.search(g.IMAGEGEN_REGEX, self.message_content):
-            await self._respond_image(search.group(4))
-
-        elif self._check_if_response():
-            await self._respond()
-
-    def _check_if_response(self):
-        if (
+        bot_mentioned_or_dm = (
             id_to_username(self.config.user_id) in self.message_content.lower()
-            or random() < 0.05
             or self.room.member_count <= 2
-        ):
-            return True
+        )
 
-        return False
+        if (
+            search := re.search(g.IMAGEGEN_REGEX, self.message_content)
+        ) and bot_mentioned_or_dm:
+            await self._respond_image(search.group(3))
+
+        elif bot_mentioned_or_dm or random() < 0.05:
+            await self._respond()
 
     async def _respond(self):
         """Respond to a message using a GPT completion."""
