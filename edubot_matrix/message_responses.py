@@ -18,6 +18,7 @@ import tempfile
 from random import random
 
 import aiofiles.os
+from edubot.types import MessageInfo
 from nio import (
     AsyncClient,
     MatrixRoom,
@@ -25,6 +26,7 @@ from nio import (
     RoomMessageText,
     UploadResponse,
 )
+from urlextract import URLExtract
 
 from edubot_matrix import g
 from edubot_matrix.config import Config
@@ -32,10 +34,14 @@ from edubot_matrix.storage import Storage
 from edubot_matrix.utils import (
     convert_room_messages_to_dict,
     id_to_username,
+    ms_to_datetime,
     send_text_to_room,
 )
 
 logger = logging.getLogger(__name__)
+
+extractor = URLExtract()
+extractor.update()
 
 
 class Message:
@@ -72,11 +78,28 @@ class Message:
 
     async def process(self) -> None:
         """Process and possibly respond to the message"""
+        # Check if there are any urls in the message
+        urls = extractor.find_urls(self.message_content)
+        if urls:
+            # TODO: only summarising the first URL right now
+            summary = g.edubot.summarise_url(
+                urls[0],
+                MessageInfo(
+                    username=self.event.sender,
+                    message=self.message_content,
+                    time=ms_to_datetime(self.event.server_timestamp),
+                ),
+                self.room.room_id,
+            )
+            if summary:
+                await send_text_to_room(
+                    self.client, self.room.room_id, summary, markdown_convert=False
+                )
+
         bot_mentioned_or_dm = (
             id_to_username(self.config.user_id) in self.message_content.lower()
             or self.room.member_count <= 2
         )
-
         if (
             search := re.search(g.IMAGEGEN_REGEX, self.message_content)
         ) and bot_mentioned_or_dm:
