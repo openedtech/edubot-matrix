@@ -12,7 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with edubot-matrix .  If not, see <http://www.gnu.org/licenses/>.
-from re import Pattern
+from re import Pattern, compile
 
 from edubot.bot import EduBot
 
@@ -22,7 +22,7 @@ edubot: EduBot | None = None
 
 config: Config | None = None
 
-IMAGEGEN_REGEX: Pattern | None = None
+IMAGEGEN_REGEX: Pattern = compile(rf"(?i)(^.{0,25}?(imagine|draw))\s+(.*)")
 
 POSITIVE_EMOJIS = [
     "🧘",
