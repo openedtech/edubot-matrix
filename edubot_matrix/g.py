@@ -22,7 +22,7 @@ edubot: EduBot | None = None
 
 config: Config | None = None
 
-IMAGEGEN_REGEX: Pattern = compile(rf"(?i)(^.{0,25}?(imagine|draw))\s+(.*)")
+IMAGEGEN_REGEX: Pattern = compile(r"(?i)(^.{0,25}?(imagine|draw))\s+(.*)")
 
 POSITIVE_EMOJIS = [
     "🧘",
