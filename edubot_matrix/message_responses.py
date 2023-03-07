@@ -105,7 +105,9 @@ class Message:
         ) and bot_mentioned_or_dm:
             await self._respond_image(search.group(3))
 
-        elif bot_mentioned_or_dm or random() < 0.05:
+        elif bot_mentioned_or_dm or random() < self.store.get_interject(
+            self.room.room_id
+        ):
             await self._respond()
 
     async def _respond(self):

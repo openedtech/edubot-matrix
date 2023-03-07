@@ -141,7 +141,8 @@ class Storage:
             """
             CREATE TABLE IF NOT EXISTS room  (
                 room_id STRING PRIMARY KEY,
-                personality STRING
+                personality STRING,
+                interject REAL
             );
             """
         )
@@ -528,5 +529,49 @@ class Storage:
             WHERE url = ?;
             """,
             (round(time.time()), rss_url),
+        )
+        self.conn.commit()
+
+    def get_interject(self, room_id: str) -> float:
+        """
+        Get the percentage chance of a random bot interjection in this room.
+
+        Percentage is expressed as a float between 0 and 1.
+
+        If no custom percentage is set, returns 0.05 (5%).
+
+        Args:
+            room_id: A Matrix room ID.
+        """
+        self._execute(
+            """
+            SELECT interject FROM room
+            WHERE room_id = ?;
+            """,
+            (room_id,),
+        )
+        res = self.cursor.fetchone()
+
+        if res is None:
+            return 0.05
+
+        return res[0]
+
+    def set_interject(self, room_id: str, interject: float) -> None:
+        """
+        Set the percentage chance of a random bot interjection in this room.
+
+        Args:
+            room_id: A Matrix room ID.
+            interject: Percentage expressed as a float between 0 and 1.
+        """
+
+        self._execute(
+            """
+            UPDATE room
+            SET interject = ?
+            WHERE room_id = ?;
+            """,
+            (interject, room_id),
         )
         self.conn.commit()

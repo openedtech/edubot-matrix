@@ -121,6 +121,8 @@ class Command:
                 await self._remove_admin()
             case "admins":
                 await self._list_admins()
+            case "interject":
+                await self._interject()
             # You must be a super admin to set the greeting.
             case "greeting" if self.event.sender not in g.config.admins:
                 await self._bad_perms()
@@ -149,6 +151,8 @@ class Command:
                 f"`{g.config.command_prefix} subscribe {{url}}` Subscribe to an RSS feed.\n\n"
                 f"`{g.config.command_prefix} unsubscribe` Unsubscribe from an RSS feed.\n\n"
                 f"`{g.config.command_prefix} feeds` List subscribed RSS feeds.\n\n"
+                f"`{g.config.command_prefix} interject [odds]` Change or print interject odds (the average amount of "
+                f"messages between random interjections). Set to 0 to disable interjections.\n\n"
                 f"`{g.config.command_prefix} add {{user_id}}` Make a user an admin in this room.\n\n"
                 f"`{g.config.command_prefix} remove {{user_id}}` Revoke a user's admin rights in this room.\n\n"
                 f"`{g.config.command_prefix} admins` List who is an admin in this room.\n\n"
@@ -347,3 +351,54 @@ class Command:
             f"New Personality:\n{personality}",
             markdown_convert=False,
         )
+
+    async def _interject(self):
+        if not self.args:
+            status_msg = ""
+            percentage = self.store.get_interject(self.room.room_id)
+            # Avoid 'ZeroDivisionError'
+            if percentage == 0:
+                status_msg = "Interjecting disabled (odds set to 0)"
+            else:
+                odds = round(1 / percentage)
+                status_msg = f"Interjecting every ~{odds} messages"
+
+            await send_text_to_room(
+                self.client,
+                self.room.room_id,
+                status_msg,
+                markdown_convert=False,
+            )
+            return
+
+        odds = self.args[0]
+
+        try:
+            odds = int(odds)
+        except (TypeError, AssertionError):
+            await send_text_to_room(
+                self.client,
+                self.room.room_id,
+                "Supplied odds must be a positive integer",
+            )
+            return
+
+        if odds < 0 or odds > 10000:
+            await send_text_to_room(
+                self.client,
+                self.room.room_id,
+                "Odds must be between 0-10000. To disable interjecting set odds to 0",
+            )
+            return
+
+        # Avoid ZeroDivisionError
+        percentage = 0.00
+        status_msg = "Interjecting disabled"
+
+        if odds != 0:
+            percentage = 1 / odds
+            status_msg = f"Now interjecting every ~{odds} messages"
+
+        self.store.set_interject(self.room.room_id, percentage)
+
+        await send_text_to_room(self.client, self.room.room_id, status_msg)
