@@ -73,6 +73,16 @@ class Callbacks:
             f"{room.user_name(event.sender)}: {msg}"
         )
 
+        # TODO: Handle threads properly instead of ignoring
+        if (
+            event.source.get("content", {}).get("m.relates_to", {}).get("rel_type")
+            == "m.thread"
+        ):
+            logger.debug(
+                f"Ignoring '{event.event_id}' in '{room.display_name}': Message belongs to thread."
+            )
+            return
+
         # Process as message if in a public room without command prefix
         has_command_prefix = msg.startswith(self.command_prefix)
 
