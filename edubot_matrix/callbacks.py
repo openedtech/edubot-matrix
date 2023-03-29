@@ -73,13 +73,14 @@ class Callbacks:
             f"{room.user_name(event.sender)}: {msg}"
         )
 
+        # Ignore messages in threads and edits
         # TODO: Handle threads properly instead of ignoring
-        if (
+        rel_type = (
             event.source.get("content", {}).get("m.relates_to", {}).get("rel_type")
-            == "m.thread"
-        ):
+        )
+        if rel_type in ("m.thread", "m.replace"):
             logger.debug(
-                f"Ignoring '{event.event_id}' in '{room.display_name}': Message belongs to thread."
+                f"Ignoring '{event.event_id}' in '{room.display_name}': rel_type = {rel_type}."
             )
             return
 
