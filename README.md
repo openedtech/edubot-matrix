@@ -1,5 +1,5 @@
 # edubot-matrix
-A Matrix chatbot integration for [EduBot](https://github.com/openedtech/edubot).
+A GPLv3 Matrix chatbot integration for [EduBot](https://github.com/openedtech/edubot).
 
 ## Acknowledgements
-[nio-template by @anoadragon453](https://github.com/anoadragon453/nio-template)
+Adapted from [nio-template by @anoadragon453](https://github.com/anoadragon453/nio-template)
