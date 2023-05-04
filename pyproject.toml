@@ -18,6 +18,9 @@ feedparser = "^6.0.10"
 urlextract = "^1.8.0"
 
 
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.3.1"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

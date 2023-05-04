@@ -78,8 +78,15 @@ class Message:
 
     async def process(self) -> None:
         """Process and possibly respond to the message"""
+        # Remove quotes from messages so that URLS in replies don't get summarised
+        message_content_no_quotes = ""
+        for line in self.message_content.split("\n"):
+            if not line.startswith(">"):
+                message_content_no_quotes += line + "\n"
+
         # Check if there are any urls in the message
-        urls = extractor.find_urls(self.message_content)
+        urls = extractor.find_urls(message_content_no_quotes)
+
         if urls:
             # TODO: only summarising the first URL right now
             summary = g.edubot.summarise_url(
