@@ -12,16 +12,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with edubot-matrix .  If not, see <http://www.gnu.org/licenses/>.
+import io
 import logging
 import re
 import tempfile
+import urllib.request
 from random import random
 
 import aiofiles.os
-from edubot.types import MessageInfo
+import PIL
+from edubot.types import ImageInfo, MessageInfo
 from nio import (
     AsyncClient,
+    DownloadError,
     MatrixRoom,
+    RoomMessageImage,
     RoomMessagesError,
     RoomMessageText,
     UploadResponse,
@@ -78,6 +83,10 @@ class Message:
 
     async def process(self) -> None:
         """Process and possibly respond to the message"""
+        if type(self.event) is RoomMessageImage:
+            await self._process_image()
+            return
+
         # Remove quotes from messages so that URLS in replies don't get summarised
         message_content_no_quotes = ""
         for line in self.message_content.split("\n"):
@@ -116,6 +125,23 @@ class Message:
             self.room.room_id
         ):
             await self._respond()
+
+    async def _process_image(self):
+        """Save images to edubot DB"""
+        download_resp = await self.client.download(self.event.url)
+
+        if type(download_resp) is DownloadError:
+            logger.error(f"Could not download image: {self.event.url}")
+            return
+
+        image_data = io.BytesIO(download_resp.body)
+
+        image: ImageInfo = {
+            "username": self.event.sender,
+            "image": PIL.Image.open(image_data),
+            "time": ms_to_datetime(self.event.server_timestamp),
+        }
+        g.edubot.save_image_to_context(image, self.room.room_id)
 
     async def _respond(self):
         """Respond to a message using a GPT completion."""
@@ -158,11 +184,6 @@ class Message:
         )
 
     async def _respond_image(self, prompt) -> None:
-        """
-
-        Args:
-            prompt:
-        """
         img = g.edubot.generate_image(prompt)
 
         if img is None:

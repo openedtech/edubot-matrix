@@ -27,6 +27,7 @@ from nio import (
     InviteMemberEvent,
     LocalProtocolError,
     LoginError,
+    RoomMessageImage,
     RoomMessageText,
     UnknownEvent,
 )
@@ -91,7 +92,7 @@ async def main():
 
     # Set up event callbacks
     callbacks = Callbacks(client, store, config)
-    client.add_event_callback(callbacks.message, (RoomMessageText,))
+    client.add_event_callback(callbacks.message, (RoomMessageText, RoomMessageImage))
     client.add_event_callback(
         callbacks.invite_event_filtered_callback, (InviteMemberEvent,)
     )
