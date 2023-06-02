@@ -25,6 +25,7 @@ from edubot.types import ImageInfo, MessageInfo
 from nio import (
     AsyncClient,
     DownloadError,
+    ErrorResponse,
     MatrixRoom,
     RoomMessageImage,
     RoomMessagesError,
@@ -184,7 +185,14 @@ class Message:
         )
 
     async def _respond_image(self, prompt) -> None:
-        img = g.edubot.generate_image(prompt)
+        """
+        Respond to a message using an AI generated image
+        """
+        img = g.edubot.generate_image(
+            prompt,
+            convert_room_messages_to_dict(self.event),
+            thread_name=self.room.room_id,
+        )
 
         if img is None:
             await send_text_to_room(
@@ -242,10 +250,12 @@ class Message:
             },
         }
 
-        try:
-            await self.client.room_send(
-                self.room.room_id, message_type="m.room.message", content=content
-            )
-            logger.info(f"Image sent to room {self.room.room_id}")
-        except Exception:
+        resp = await self.client.room_send(
+            self.room.room_id, message_type="m.room.message", content=content
+        )
+
+        if type(resp) is ErrorResponse:
             logger.error(f"Image couldn't be sent to room {self.room.room_id}")
+            return
+
+        logger.info(f"Image sent to room {self.room.room_id}")

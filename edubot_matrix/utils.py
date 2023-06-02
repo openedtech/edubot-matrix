@@ -175,13 +175,16 @@ def ms_to_datetime(timestamp: float) -> datetime:
 
 
 def convert_room_messages_to_dict(
-    messages: RoomMessagesResponse,
-) -> list[dict[str, Union[str, datetime]]]:
+    messages: RoomMessagesResponse | RoomMessageText,
+) -> list[MessageInfo] | MessageInfo:
     """
-    Convert list of events into the format required by EduBot lib.
+    Convert list of events, or one event into the format required by EduBot lib.
     """
-    # Remove bad events from the list
-    messages_lst = [i for i in messages.chunk if isinstance(i, RoomMessageText)]
+    if type(messages) is RoomMessagesResponse:
+        # Remove bad events from the list
+        messages_lst = [i for i in messages.chunk if isinstance(i, RoomMessageText)]
+    else:
+        messages_lst = [messages]
 
     result_lst: list[MessageInfo] = []
 
@@ -194,7 +197,10 @@ def convert_room_messages_to_dict(
             }
         )
 
-    return result_lst
+    if len(result_lst) > 1:
+        return result_lst
+
+    return result_lst[0]
 
 
 def unix_utc() -> int:
