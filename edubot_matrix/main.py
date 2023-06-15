@@ -64,22 +64,20 @@ async def main():
     g.config.command_prefix = f"!{g.config.bot_name}"
 
     g.help_text = (
-        (
-            f"#Room Admin commands:\n"
-            f"`{g.config.command_prefix} personality [new personality]` Change or print the personality of the "
-            f"bot.\n\n "
-            f"`{g.config.command_prefix} subscribe {{url}}` Subscribe to an RSS feed.\n\n"
-            f"`{g.config.command_prefix} unsubscribe` Unsubscribe from an RSS feed.\n\n"
-            f"`{g.config.command_prefix} feeds` List subscribed RSS feeds.\n\n"
-            f"`{g.config.command_prefix} interject [odds]` Change or print interject odds (the average amount of "
-            f"messages between random interjections). Set to 0 to disable interjections.\n\n"
-            f"`{g.config.command_prefix} add {{user_id}}` Make a user an admin in this room.\n\n"
-            f"`{g.config.command_prefix} remove {{user_id}}` Revoke a user's admin rights in this room.\n\n"
-            f"`{g.config.command_prefix} admins` List who is an admin in this room.\n\n"
-            f"#Super Admin commands:\n"
-            f"`{g.config.command_prefix} greeting [msg]` Change the bot's greeting, if no msg is supplied the "
-            f"current greeting is shown.\n"
-        ),
+        f"#Room Admin commands:\n"
+        f"`{g.config.command_prefix} personality [new personality]` Change or print the personality of the "
+        f"bot.\n\n "
+        f"`{g.config.command_prefix} subscribe {{url}}` Subscribe to an RSS feed.\n\n"
+        f"`{g.config.command_prefix} unsubscribe` Unsubscribe from an RSS feed.\n\n"
+        f"`{g.config.command_prefix} feeds` List subscribed RSS feeds.\n\n"
+        f"`{g.config.command_prefix} interject [odds]` Change or print interject odds (the average amount of "
+        f"messages between random interjections). Set to 0 to disable interjections.\n\n"
+        f"`{g.config.command_prefix} add {{user_id}}` Make a user an admin in this room.\n\n"
+        f"`{g.config.command_prefix} remove {{user_id}}` Revoke a user's admin rights in this room.\n\n"
+        f"`{g.config.command_prefix} admins` List who is an admin in this room.\n\n"
+        f"#Super Admin commands:\n"
+        f"`{g.config.command_prefix} greeting [msg]` Change the bot's greeting, if no msg is supplied the "
+        f"current greeting is shown.\n"
     )
 
     g.edubot = EduBot(
