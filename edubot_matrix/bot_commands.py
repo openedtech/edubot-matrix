@@ -137,6 +137,7 @@ class Command:
             self.client,
             self.room.room_id,
             f"Sorry {id_to_username(self.event.sender)}, you don't have permission to use this command!",
+            notice=True,
         )
 
     async def _show_help(self) -> None:
@@ -144,22 +145,8 @@ class Command:
         await send_text_to_room(
             self.client,
             self.room.room_id,
-            (
-                f"#Room Admin commands:\n"
-                f"`{g.config.command_prefix} personality [new personality]` Change or print the personality of the "
-                f"bot.\n\n "
-                f"`{g.config.command_prefix} subscribe {{url}}` Subscribe to an RSS feed.\n\n"
-                f"`{g.config.command_prefix} unsubscribe` Unsubscribe from an RSS feed.\n\n"
-                f"`{g.config.command_prefix} feeds` List subscribed RSS feeds.\n\n"
-                f"`{g.config.command_prefix} interject [odds]` Change or print interject odds (the average amount of "
-                f"messages between random interjections). Set to 0 to disable interjections.\n\n"
-                f"`{g.config.command_prefix} add {{user_id}}` Make a user an admin in this room.\n\n"
-                f"`{g.config.command_prefix} remove {{user_id}}` Revoke a user's admin rights in this room.\n\n"
-                f"`{g.config.command_prefix} admins` List who is an admin in this room.\n\n"
-                f"#Super Admin commands:\n"
-                f"`{g.config.command_prefix} greeting [msg]` Change the bot's greeting, if no msg is supplied the "
-                f"current greeting is shown.\n"
-            ),
+            g.help_text,
+            notice=True,
         )
 
     async def _unknown_command(self) -> None:
@@ -167,6 +154,7 @@ class Command:
             self.client,
             self.room.room_id,
             f"Unknown command '{self.command}'. Try the 'help' command for more information.",
+            notice=True,
         )
 
     async def _greeting(self) -> None:
@@ -174,10 +162,12 @@ class Command:
         if self.args:
             g.config.greeting = " ".join(self.args)
             self.store.set_greeting(g.config.greeting)
-            await send_text_to_room(self.client, self.room.room_id, "New greeting set!")
+            await send_text_to_room(
+                self.client, self.room.room_id, "New greeting set!", notice=True
+            )
         else:
             await send_text_to_room(
-                self.client, self.room.room_id, self.store.get_greeting()
+                self.client, self.room.room_id, self.store.get_greeting(), notice=True
             )
 
     async def _add_admin(self) -> None:
@@ -192,14 +182,20 @@ class Command:
         # Check if the user_id we are making an admin is in this room
         if new_admin not in self.members:
             await send_text_to_room(
-                self.client, self.room.room_id, f"User {new_admin} is not in this room!"
+                self.client,
+                self.room.room_id,
+                f"User {new_admin} is not in this room!",
+                notice=True,
             )
             return
 
         self.store.set_room_admin(self.room.room_id, new_admin)
 
         await send_text_to_room(
-            self.client, self.room.room_id, f"{new_admin} is now an admin in this room!"
+            self.client,
+            self.room.room_id,
+            f"{new_admin} is now an admin in this room!",
+            notice=True,
         )
 
     async def _remove_admin(self) -> None:
@@ -219,6 +215,7 @@ class Command:
                 self.client,
                 self.room.room_id,
                 f"{admin_id} is not an admin in this room!",
+                notice=True,
             )
             return
 
@@ -228,13 +225,17 @@ class Command:
                 self.client,
                 self.room.room_id,
                 f"You are the only admin in this room, and cannot be removed.",
+                notice=True,
             )
             return
 
         # If the user ID is not in this room.
         if admin_id not in self.members:
             await send_text_to_room(
-                self.client, self.room.room_id, f"{admin_id} is a member of this room!"
+                self.client,
+                self.room.room_id,
+                f"{admin_id} is a member of this room!",
+                notice=True,
             )
             return
 
@@ -244,6 +245,7 @@ class Command:
                 self.client,
                 self.room.room_id,
                 "You cannot revoke your own admin permissions!",
+                notice=True,
             )
             return
 
@@ -253,6 +255,7 @@ class Command:
             self.client,
             self.room.room_id,
             f"{admin_id} is no longer an admin in this room.",
+            notice=True,
         )
 
     async def _list_admins(self):
@@ -261,7 +264,10 @@ class Command:
         admins: str = " ".join(self.store.list_room_admins(self.room.room_id))
 
         await send_text_to_room(
-            self.client, self.room.room_id, f"Admins in this room: {admins}"
+            self.client,
+            self.room.room_id,
+            f"Admins in this room: {admins}",
+            notice=True,
         )
 
     async def _list_rss_feeds(self):
@@ -273,6 +279,7 @@ class Command:
             self.room.room_id,
             f"RSS subscriptions:\n{feeds}",
             markdown_convert=False,
+            notice=True,
         )
 
     async def _add_rss_feed(self):
@@ -290,12 +297,16 @@ class Command:
                 self.client,
                 self.room.room_id,
                 "The room is already subscribed to this RSS feed!",
+                notice=True,
             )
             return
 
         if not validate_rss_url(self.args[0]):
             await send_text_to_room(
-                self.client, self.room.room_id, f"'{url}' is not a valid RSS feed."
+                self.client,
+                self.room.room_id,
+                f"'{url}' is not a valid RSS feed.",
+                notice=True,
             )
             return
 
@@ -305,6 +316,7 @@ class Command:
             self.client,
             self.room.room_id,
             f"Subscribed to {url}! I'll send new updates to the room.",
+            notice=True,
         )
 
     async def _remove_rss_feed(self):
@@ -317,14 +329,20 @@ class Command:
 
         if url not in self.store.get_feeds_from_room(self.room.room_id):
             await send_text_to_room(
-                self.client, self.room.room_id, f"This room is not subscribed to {url}."
+                self.client,
+                self.room.room_id,
+                f"This room is not subscribed to {url}.",
+                notice=True,
             )
             return
 
         self.store.remove_rss_feed(self.room.room_id, url)
 
         await send_text_to_room(
-            self.client, self.room.room_id, f"Unsubscribed from {url}."
+            self.client,
+            self.room.room_id,
+            f"Unsubscribed from {url}.",
+            notice=True,
         )
 
     async def _personality(self):
@@ -339,6 +357,7 @@ class Command:
                 self.room.room_id,
                 f"Current personality:\n{personality}",
                 markdown_convert=False,
+                notice=True,
             )
             return
 
@@ -350,6 +369,7 @@ class Command:
             self.room.room_id,
             f"New Personality:\n{personality}",
             markdown_convert=False,
+            notice=True,
         )
 
     async def _interject(self):
@@ -368,6 +388,7 @@ class Command:
                 self.room.room_id,
                 status_msg,
                 markdown_convert=False,
+                notice=True,
             )
             return
 
@@ -380,6 +401,7 @@ class Command:
                 self.client,
                 self.room.room_id,
                 "Supplied odds must be a positive integer",
+                notice=True,
             )
             return
 
@@ -388,6 +410,7 @@ class Command:
                 self.client,
                 self.room.room_id,
                 "Odds must be between 0-10000. To disable interjecting set odds to 0",
+                notice=True,
             )
             return
 
@@ -401,4 +424,4 @@ class Command:
 
         self.store.set_interject(self.room.room_id, percentage)
 
-        await send_text_to_room(self.client, self.room.room_id, status_msg)
+        await send_text_to_room(self.client, self.room.room_id, status_msg, notice=True)

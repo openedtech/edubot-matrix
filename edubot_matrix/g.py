@@ -22,6 +22,8 @@ edubot: EduBot | None = None
 
 config: Config | None = None
 
+help_text: str = ""
+
 IMAGEGEN_REGEX: Pattern = compile(r"(?i)(^.{0,25}?(imagine|draw))\s+(.*)")
 
 POSITIVE_EMOJIS = [

@@ -62,7 +62,29 @@ async def main():
     # Add some config fields that are not used by the nio lib
     g.config.bot_name = id_to_username(config.user_id)
     g.config.command_prefix = f"!{g.config.bot_name}"
-    g.edubot = EduBot(g.config.bot_name, "matrix", config.original_prompt)
+
+    g.help_text = (
+        (
+            f"#Room Admin commands:\n"
+            f"`{g.config.command_prefix} personality [new personality]` Change or print the personality of the "
+            f"bot.\n\n "
+            f"`{g.config.command_prefix} subscribe {{url}}` Subscribe to an RSS feed.\n\n"
+            f"`{g.config.command_prefix} unsubscribe` Unsubscribe from an RSS feed.\n\n"
+            f"`{g.config.command_prefix} feeds` List subscribed RSS feeds.\n\n"
+            f"`{g.config.command_prefix} interject [odds]` Change or print interject odds (the average amount of "
+            f"messages between random interjections). Set to 0 to disable interjections.\n\n"
+            f"`{g.config.command_prefix} add {{user_id}}` Make a user an admin in this room.\n\n"
+            f"`{g.config.command_prefix} remove {{user_id}}` Revoke a user's admin rights in this room.\n\n"
+            f"`{g.config.command_prefix} admins` List who is an admin in this room.\n\n"
+            f"#Super Admin commands:\n"
+            f"`{g.config.command_prefix} greeting [msg]` Change the bot's greeting, if no msg is supplied the "
+            f"current greeting is shown.\n"
+        ),
+    )
+
+    g.edubot = EduBot(
+        g.config.bot_name, "matrix", [config.original_prompt, g.help_text]
+    )
 
     # Configure the database
     store = Storage(config.database)
