@@ -105,6 +105,7 @@ async def sync_rss_feeds(client: AsyncClient, store: Storage) -> None:
                     # A zero width space is added to the beginning of the feed name.
                     # This stops feed names starting with hashtags being converted into markdown headers.
                     f"&#8203;{update['feed']['name']}: [{update['title']}]({update['url']})",
+                    notice=True,
                 )
 
         logger.info("Done syncing RSS feeds")

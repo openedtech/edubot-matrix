@@ -110,7 +110,11 @@ class Message:
             )
             if summary:
                 await send_text_to_room(
-                    self.client, self.room.room_id, summary, markdown_convert=False
+                    self.client,
+                    self.room.room_id,
+                    summary,
+                    markdown_convert=False,
+                    notice=True,
                 )
 
         bot_mentioned_or_dm = (

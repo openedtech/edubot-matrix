@@ -27,6 +27,7 @@ from nio import (
     ErrorResponse,
     MatrixRoom,
     MegolmEvent,
+    RoomMessageNotice,
     RoomMessagesResponse,
     RoomMessageText,
     RoomSendResponse,
@@ -182,7 +183,11 @@ def convert_room_messages_to_dict(
     """
     if type(messages) is RoomMessagesResponse:
         # Remove bad events from the list
-        messages_lst = [i for i in messages.chunk if isinstance(i, RoomMessageText)]
+        messages_lst = [
+            i
+            for i in messages.chunk
+            if isinstance(i, RoomMessageText) or isinstance(i, RoomMessageNotice)
+        ]
     else:
         messages_lst = [messages]
 
