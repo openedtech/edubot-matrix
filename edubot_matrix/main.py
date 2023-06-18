@@ -72,6 +72,7 @@ async def main():
         f"`{g.config.command_prefix} feeds` List subscribed RSS feeds.\n\n"
         f"`{g.config.command_prefix} interject [odds]` Change or print interject odds (the average amount of "
         f"messages between random interjections). Set to 0 to disable interjections.\n\n"
+        f"`{g.config.command_prefix} threads` Toggle the use of threads to hide some of the bot's automated responses.\n\n"
         f"`{g.config.command_prefix} add {{user_id}}` Make a user an admin in this room.\n\n"
         f"`{g.config.command_prefix} remove {{user_id}}` Revoke a user's admin rights in this room.\n\n"
         f"`{g.config.command_prefix} admins` List who is an admin in this room.\n\n"

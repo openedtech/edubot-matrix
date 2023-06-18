@@ -109,12 +109,17 @@ class Message:
                 self.room.room_id,
             )
             if summary:
+                thread_reply_id = None
+                if self.store.get_hide_in_threads(room_id=self.room.room_id):
+                    thread_reply_id = self.event.event_id
+
                 await send_text_to_room(
                     self.client,
                     self.room.room_id,
                     summary,
                     markdown_convert=False,
                     notice=True,
+                    thread_reply_to_event_id=thread_reply_id,
                 )
 
         bot_mentioned_or_dm = (

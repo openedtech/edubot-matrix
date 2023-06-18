@@ -107,6 +107,8 @@ class Command:
         match self.command:
             case "help":
                 await self._show_help()
+            case "threads":
+                await self.toggle_hide_in_threads()
             case "personality":
                 await self._personality()
             case "subscribe":
@@ -169,6 +171,17 @@ class Command:
             await send_text_to_room(
                 self.client, self.room.room_id, self.store.get_greeting(), notice=True
             )
+
+    async def toggle_hide_in_threads(self) -> None:
+        """Toggle the use of threads to hide some of the automated bot's responses."""
+        hiding: bool = self.store.toggle_hide_in_threads(self.room.room_id)
+
+        if hiding:
+            msg = "Now hiding automated bot responses in threads."
+        else:
+            msg = "No longer hiding automated bot responses in threads."
+
+        await send_text_to_room(self.client, self.room.room_id, msg, notice=True)
 
     async def _add_admin(self) -> None:
         """Add an admin to the room."""

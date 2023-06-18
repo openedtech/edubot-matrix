@@ -34,6 +34,8 @@ from nio import (
     SendRetryError,
 )
 
+from edubot_matrix import g
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,7 +45,7 @@ async def send_text_to_room(
     message: str,
     notice: bool = False,
     markdown_convert: bool = True,
-    reply_to_event_id: Optional[str] = None,
+    thread_reply_to_event_id: Optional[str] = None,
 ) -> Union[RoomSendResponse, ErrorResponse]:
     """Send text to a matrix room.
 
@@ -60,7 +62,7 @@ async def send_text_to_room(
         markdown_convert: Whether to convert the message content to markdown.
             Defaults to true.
 
-        reply_to_event_id: Whether this message is a reply to another event. The event
+        thread_reply_to_event_id: Whether this message is a thread reply to another event. The event
             ID this is message is a reply to.
 
     Returns:
@@ -78,8 +80,14 @@ async def send_text_to_room(
         content["format"] = "org.matrix.custom.html"
         content["formatted_body"] = markdown(message)
 
-    if reply_to_event_id:
-        content["m.relates_to"] = {"m.in_reply_to": {"event_id": reply_to_event_id}}
+    if thread_reply_to_event_id:
+        content["m.relates_to"] = {
+            "rel_type": "m.thread",
+            "event_id": thread_reply_to_event_id,
+            # Fallback for clients not supporting threads
+            "is_falling_back": "true",
+            "m.in_reply_to": {"event_id": thread_reply_to_event_id},
+        }
 
     try:
         return await client.room_send(

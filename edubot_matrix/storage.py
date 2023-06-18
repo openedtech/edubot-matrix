@@ -142,7 +142,8 @@ class Storage:
             CREATE TABLE IF NOT EXISTS room  (
                 room_id STRING PRIMARY KEY,
                 personality STRING,
-                interject REAL
+                interject REAL,
+                hide_in_threads BOOLEAN DEFAULT 1
             );
             """
         )
@@ -575,3 +576,57 @@ class Storage:
             (interject, room_id),
         )
         self.conn.commit()
+
+    def get_hide_in_threads(self, room_id: str) -> bool:
+        """
+        Get whether the bot should hide some of it's automated responses in this room.
+
+        Args:
+            room_id: A Matrix room ID.
+
+        Returns:
+            Whether the bot will use threads to hide or not.
+        """
+        self._add_room_to_db(room_id)
+
+        self._execute(
+            """
+            SELECT hide_in_threads FROM room
+            WHERE room_id = ?;
+            """,
+            (room_id,),
+        )
+        res = self.cursor.fetchone()
+        if res is None:
+            raise ValueError(
+                f"SQL problem: Room {room_id} not found in database. Likely DB is corrupted."
+            )
+
+        # SQLite stores booleans as 0 and 1
+        return bool(res[0])
+
+    def toggle_hide_in_threads(self, room_id: str) -> bool:
+        """
+        Toggle whether the bot should hide some of it's automated responses in this room.
+
+        Args:
+            room_id: A Matrix room ID.
+
+        Returns:
+            Whether the bot will use threads to hide or not.
+        """
+        # SQLite stores booleans as 0 and 1
+        # This expression will flip the bool value
+        hide_in_threads = 1 - self.get_hide_in_threads(room_id)
+
+        self._execute(
+            """
+            UPDATE room
+            SET hide_in_threads = ?
+            WHERE room_id = ?;
+            """,
+            (hide_in_threads, room_id),
+        )
+        self.conn.commit()
+
+        return bool(hide_in_threads)
