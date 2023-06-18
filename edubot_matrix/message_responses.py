@@ -16,7 +16,6 @@ import io
 import logging
 import re
 import tempfile
-import urllib.request
 from random import random
 
 import aiofiles.os

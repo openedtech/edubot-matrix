@@ -34,8 +34,6 @@ from nio import (
     SendRetryError,
 )
 
-from edubot_matrix import g
-
 logger = logging.getLogger(__name__)
 
 
