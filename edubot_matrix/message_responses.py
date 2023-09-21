@@ -188,6 +188,10 @@ class Message:
         else:
             completion = g.edubot.gpt_answer(context, events.room_id)
 
+        # If GPT fails for whatever reason it's better to not respond rather than send an empty string
+        if completion is None:
+            return
+
         await send_text_to_room(
             self.client, self.room.room_id, completion, markdown_convert=False
         )
